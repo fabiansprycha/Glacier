@@ -1,7 +1,7 @@
 import { GRID, ROOM_H, ROOM_W } from '../core/config';
 import type { LevelDef } from '../core/levels';
 import { Rng } from '../core/rng';
-import { DOOR_POS, buildRoomTiles, floorTileFor, pickCamera, pickEnemySpawns, pickTraps, placeVending } from './roomLayout';
+import { DOOR_POS, buildRoomTiles, floorTileFor, placeCamera, pickEnemySpawns, pickTraps, placeVending } from './roomLayout';
 import { T, isFurniture } from './tiles';
 
 export type Dir = 'n' | 's' | 'e' | 'w';
@@ -40,6 +40,8 @@ export interface Room {
   traps: { x: number; y: number }[];
   /** Security camera on a wall tile, looking into the room. Only in rooms without drones. */
   camera: SecurityCamera | null;
+  /** The CCTV computer that shuts the camera down; always out of the camera's sight. */
+  cameraPc: { x: number; y: number } | null;
   /** Vending machine tile, if the room has one. */
   vending: { x: number; y: number } | null;
   /** Wall side hiding the way into the secret room (a cracked wall until smashed). */
@@ -98,7 +100,9 @@ export function generateDungeon({ seed, level }: DungeonOptions): Dungeon {
     for (const room of layout) {
       room.tiles = buildRoomTiles(room, rng, level);
       // Some ordinary rooms trade their drones for a camera that calls them in.
-      room.camera = room.type === 'normal' && rng.chance(level.cameraChance) ? pickCamera(room, rng) : null;
+      const watched = room.type === 'normal' && rng.chance(level.cameraChance) ? placeCamera(room, rng) : null;
+      room.camera = watched?.camera ?? null;
+      room.cameraPc = watched?.pc ?? null;
       room.enemies = room.camera ? [] : pickEnemySpawns(room, rng, level);
       room.traps = pickTraps(room, rng, level);
     }
@@ -185,7 +189,7 @@ function addSecretRoom(layout: Room[], rng: Rng, level: LevelDef): Room | null {
 }
 
 function makeRoom(id: number, gx: number, gy: number, type: RoomType, depth: number): Room {
-  return { id, gx, gy, type, depth, doors: { n: false, s: false, e: false, w: false }, tiles: [], enemies: [], traps: [], camera: null, vending: null };
+  return { id, gx, gy, type, depth, doors: { n: false, s: false, e: false, w: false }, tiles: [], enemies: [], traps: [], camera: null, cameraPc: null, vending: null };
 }
 
 export function doorCount(room: Room): number {

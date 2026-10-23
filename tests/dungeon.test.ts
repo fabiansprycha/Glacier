@@ -3,6 +3,7 @@ import { GRID, ROOM_H, ROOM_W } from '../src/core/config';
 import { LEVELS } from '../src/core/levels';
 import { DIRS, DIR_VEC, OPPOSITE, findRoomAt, generateDungeon } from '../src/world/dungeon';
 import { DOOR_POS, isFullyConnected } from '../src/world/roomLayout';
+import { cameraCanSeeTile } from '../src/world/cameraVision';
 import { BOSSES, CAMERA, DRONE, ELEVATOR, FX, GLACIER, HERO_FRAMES, ICONS, TERMINAL } from '../src/gfx/sprites';
 import { isBreakable, isWalkable } from '../src/world/tiles';
 import { T } from '../src/world/tiles';
@@ -18,6 +19,7 @@ describe('generateDungeon', () => {
 
   it.each(LEVELS.map((level, i) => [i + 1, level] as const))('produces valid floors for level %i', (_n, level) => {
     const roomCount = level.roomCount;
+    let cameras = 0;
     for (const seed of seeds) {
       const d = generateDungeon({ seed, level });
       // The secret room hangs off the door tree; it is checked on its own below.
@@ -87,6 +89,13 @@ describe('generateDungeon', () => {
           expect(r.enemies).toEqual([]);
           expect(r.tiles[r.camera.y][r.camera.x]).not.toBe(T.DOOR);
           expect(isWalkable(r.tiles[r.camera.y][r.camera.x])).toBe(false);
+          // Its CCTV computer is always somewhere the camera can never look.
+          const pc = r.cameraPc!;
+          expect(r.tiles[pc.y][pc.x]).toBe(T.CAMERA_PC);
+          expect(cameraCanSeeTile(r.camera, pc.x, pc.y)).toBe(false);
+          cameras++;
+        } else {
+          expect(r.cameraPc).toBeNull();
         }
         for (const t of r.traps) {
           expect(isWalkable(r.tiles[t.y][t.x])).toBe(true);
@@ -94,6 +103,7 @@ describe('generateDungeon', () => {
         }
       }
     }
+    expect(cameras).toBeGreaterThan(seeds.length / 2);
   });
 });
 

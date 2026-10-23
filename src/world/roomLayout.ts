@@ -2,6 +2,7 @@ import { ROOM_H, ROOM_W } from '../core/config';
 import type { LevelDef } from '../core/levels';
 import type { Rng } from '../core/rng';
 import type { Dir, EnemySpawn, Room, SecurityCamera } from './dungeon';
+import { cameraCanSeeTile } from './cameraVision';
 import { T, isBreakable, isWalkable } from './tiles';
 
 const MID_X = Math.floor(ROOM_W / 2);
@@ -262,6 +263,34 @@ export function pickCamera(room: Room, rng: Rng): SecurityCamera {
   const doors = (Object.keys(DOOR_POS) as Dir[]).filter((d) => room.doors[d]).map((d) => DOOR_POS[d]);
   const free = spots.filter((s) => doors.every((d) => Math.abs(d.x - s.x) + Math.abs(d.y - s.y) > 2));
   return rng.pick(free);
+}
+
+/**
+ * Mounts a camera and puts its CCTV computer somewhere the camera can never see, with a free tile
+ * next to it (also out of sight) so the player can shut the camera down unseen. Edits the room's
+ * tiles; returns null when no camera spot has a safe place for the computer.
+ */
+export function placeCamera(room: Room, rng: Rng): { camera: SecurityCamera; pc: Point } | null {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const camera = pickCamera(room, rng);
+    const safe = (x: number, y: number) => !cameraCanSeeTile(camera, x, y);
+    const spots: Point[] = [];
+    for (let y = 1; y < ROOM_H - 1; y++)
+      for (let x = 1; x < ROOM_W - 1; x++) {
+        if (inDoorLane({ x, y }) || !isWalkable(room.tiles[y][x]) || !safe(x, y)) continue;
+        const standable = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(
+          ([dx, dy]) => isWalkable(room.tiles[y + dy]?.[x + dx] ?? T.WALL) && safe(x + dx, y + dy),
+        );
+        if (standable) spots.push({ x, y });
+      }
+    for (const pc of rng.shuffle(spots)) {
+      const before = room.tiles[pc.y][pc.x];
+      room.tiles[pc.y][pc.x] = T.CAMERA_PC;
+      if (isFullyConnected(room.tiles, true)) return { camera, pc };
+      room.tiles[pc.y][pc.x] = before;
+    }
+  }
+  return null;
 }
 
 /** Puts a vending machine against the top or bottom wall. Returns its tile, or null if nothing fits. */

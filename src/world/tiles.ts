@@ -29,14 +29,15 @@ export const T = {
   CAR_BOTTOM: 26, // abandoned car, back half
   WALL_CRACKED: 27, // cracked wall hiding the secret room: smash it to open a door
   WALL_SIGN: 28, // wall with a parking sign
+  CAMERA_PC: 29, // CCTV control computer: shuts the room's security camera down
 } as const;
 
 export type TileId = (typeof T)[keyof typeof T];
 
-export const TILE_COUNT = 29;
+export const TILE_COUNT = 30;
 
 export const SOLID_TILES: readonly TileId[] = [
-  T.WALL, T.WINDOW, T.WALL_CRACKED, T.WALL_SIGN, T.PILLAR, T.CAR_TOP, T.CAR_BOTTOM, T.DESK, T.DESK_PC, T.CABINET, T.PLANT, T.SERVER, T.VOID,
+  T.WALL, T.WINDOW, T.WALL_CRACKED, T.WALL_SIGN, T.PILLAR, T.CAR_TOP, T.CAR_BOTTOM, T.CAMERA_PC, T.DESK, T.DESK_PC, T.CABINET, T.PLANT, T.SERVER, T.VOID,
   T.CABINET_OPEN, T.DESK_PC_OFF, T.DOOR_LOCKED, T.DESK_BARE, T.DESK_PC_GLACIER, T.VENDING,
   T.FLOWERS, T.BOXES, T.CHAIR,
 ];
@@ -44,7 +45,7 @@ export const SOLID_TILES: readonly TileId[] = [
 /** Furniture is drawn on its own layer, on top of the room's floor. */
 export const FURNITURE_TILES: readonly TileId[] = [
   T.DESK, T.DESK_PC, T.CABINET, T.PLANT, T.SERVER, T.CABINET_OPEN, T.DESK_PC_OFF, T.DESK_BARE, T.DESK_PC_GLACIER, T.VENDING,
-  T.FLOWERS, T.BOXES, T.CHAIR, T.PILLAR, T.CAR_TOP, T.CAR_BOTTOM,
+  T.FLOWERS, T.BOXES, T.CHAIR, T.PILLAR, T.CAR_TOP, T.CAR_BOTTOM, T.CAMERA_PC,
 ];
 
 /** Furniture the player can search, and what it turns into afterwards. */
@@ -53,6 +54,7 @@ export const SEARCHABLE: Partial<Record<number, number>> = {
   [T.DESK_PC]: T.DESK_PC_OFF,
   [T.DESK]: T.DESK_BARE,
   [T.DESK_PC_GLACIER]: T.DESK_PC_OFF,
+  [T.CAMERA_PC]: T.DESK_PC_OFF,
 };
 
 /** Clutter that blocks the way until the player smashes it (badge or pens): tile -> hits needed. */

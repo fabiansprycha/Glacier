@@ -437,12 +437,15 @@ export class GameScene extends Phaser.Scene {
       Phaser.Math.Distance.Between(this.player.feet.x, this.player.feet.y, this.terminal.x, this.terminal.y + 6) < 18;
     const vending = nearTerminal ? null : this.search.findTarget(this.player, (t) => t === T.VENDING);
     const target = nearTerminal || vending ? null : this.search.findTarget(this.player);
-    const roomBusy = this.livingEnemies(this.currentRoom).length > 0;
+    // The CCTV computer works even mid-fight: it is how you stop a camera from calling more drones.
+    const cctv = target?.tile === T.CAMERA_PC;
+    const roomBusy = !cctv && this.livingEnemies(this.currentRoom).length > 0;
 
     let prompt: string | null = null;
     if (nearTerminal) prompt = '[Space] Connect to the terminal';
     else if (vending) prompt = roomBusy ? 'Deal with the enemies first' : '[Space] Vending machine';
     else if (target && roomBusy) prompt = 'Deal with the enemies first';
+    else if (cctv) prompt = '[Space] Shut down the camera';
     else if (target) prompt = `[Space] Search the ${SEARCH_NAMES[target.tile] ?? 'furniture'}`;
     if (prompt !== this.lastPrompt) {
       this.lastPrompt = prompt;
@@ -454,8 +457,17 @@ export class GameScene extends Phaser.Scene {
     else if (vending && !roomBusy) this.openVending();
     else if (target && !roomBusy) {
       this.player.halt();
-      this.search.start(target, (t) => (t.tile === T.DESK_PC_GLACIER ? this.startCaptcha(t) : this.giveLoot(t)));
+      this.search.start(target, (t) => {
+        if (t.tile === T.CAMERA_PC) this.shutDownCamera();
+        else if (t.tile === T.DESK_PC_GLACIER) this.startCaptcha(t);
+        else this.giveLoot(t);
+      });
     }
+  }
+
+  private shutDownCamera(): void {
+    this.securityCameras.disable(this.currentRoom);
+    this.toast('Camera offline. It will not call any more drones.', PAL.lime);
   }
 
   private giveLoot({ tile, tx, ty }: SearchTarget): void {

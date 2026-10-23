@@ -374,6 +374,18 @@ function createTileset(scene: Phaser.Scene): void {
       box(9, 6, 1, 2, PAL.white);
       box(7, 8, 2, 1, PAL.white);
     },
+    [T.CAMERA_PC]: () => {
+      // CCTV desk: the monitor shows a grid of camera feeds, with a red REC light.
+      draw[T.DESK_BARE]();
+      box(3, 1, 10, 7, PAL.black);
+      box(4, 2, 4, 2, PAL.green);
+      box(9, 2, 3, 2, PAL.teal);
+      box(4, 5, 4, 2, PAL.teal);
+      box(9, 5, 3, 2, PAL.green);
+      px(12, 1, PAL.red);
+      box(7, 8, 2, 1, PAL.black);
+      box(4, 9, 8, 2, PAL.grey);
+    },
     [T.DESK_PC_OFF]: () => {
       draw[T.DESK_PC]();
       box(4, 2, 8, 5, PAL.black);
