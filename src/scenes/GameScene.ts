@@ -75,6 +75,8 @@ const ROOM_PX_H = ROOM_H * TILE;
 const WAKE_DELAY = 450;
 /** No enemy appears closer than this to the player, whether it was placed in the room or flies in later. */
 const SAFE_SPAWN = 4 * TILE;
+/** How long the death animation plays before the title screen. */
+const DEATH_MS = 4200;
 /** MEOLN's reward for bringing back every USB drive. */
 const BACKUP_PLN = 8;
 
@@ -496,8 +498,27 @@ export class GameScene extends Phaser.Scene {
     this.statsChanged();
     if (this.stats.hp <= 0) {
       emit(this.game, 'player:died', { level: this.level });
-      this.toMainMenu(2600);
+      this.playDeath();
+      this.toMainMenu(DEATH_MS);
     }
+  }
+
+  /** The body falls over and greys out while its ghost floats up and away: moving to the cloud. */
+  private playDeath(): void {
+    const body = this.player;
+    body.halt();
+    body.setTint(color(PAL.grey));
+    this.tweens.add({ targets: body, angle: 90, y: body.y + 3, duration: 350, ease: 'Quad.in' });
+    const ghost = this.add.image(body.x, body.y - 2, TEX.fx, 'ghost').setDepth(10_000).setAlpha(0);
+    this.tweens.chain({
+      targets: ghost,
+      tweens: [
+        { alpha: 0.9, y: body.y - 10, duration: 500, delay: 450, ease: 'Sine.out' },
+        { y: body.y - 70, alpha: 0, duration: 2400, ease: 'Sine.in' },
+      ],
+    });
+    // A gentle side-to-side sway while it rises.
+    this.tweens.add({ targets: ghost, x: body.x + 5, duration: 450, yoyo: true, repeat: 4, ease: 'Sine.inOut', delay: 450 });
   }
 
   private statsChanged(): void {

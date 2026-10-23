@@ -203,6 +203,28 @@ export const FX = {
     },
     { name: 'paper', rows: PAPER_ROWS },
     {
+      // The survivor's ghost leaving the body on death.
+      name: 'ghost',
+      rows: [
+        '................',
+        '.....cccccc.....',
+        '....cwwwwwwc....',
+        '...cwwwwwwwwc...',
+        '...cwwkwwkwwc...',
+        '...cwwkwwkwwc...',
+        '...cwwwwwwwwc...',
+        '...cwwwkkwwwc...',
+        '...cwwwwwwwwc...',
+        '...cwwwwwwwwc...',
+        '...cwwwwwwwwc...',
+        '...cwwcwwcwwc...',
+        '...cwc.cc.cwc...',
+        '....c......c....',
+        '................',
+        '................',
+      ],
+    },
+    {
       name: 'ice',
       rows: [
         '................', '................', '................', '................',

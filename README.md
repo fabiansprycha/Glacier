@@ -77,7 +77,7 @@ Principles that keep it easy to extend:
   - **Overheating** (most floors have one such room): Glacier switched the air conditioning off. Heat rises while you are in the room, and at 100% you lose 1 HP every 2.2 s until you restart the floor cooling unit (Space, works mid-fight).
 - **Emails and sticky notes** (`world/lore.ts`): about half of the ordinary computers hold an email from the people who worked here, and some desks a sticky note. When you find one, a prompt appears: Space opens it in its own window (a mail client or a yellow sticky note), Space or Esc closes it. Walk away and it stays unread. Each one is shown once per run.
 - **Messages** wait their turn instead of replacing each other, and stay on screen longer the longer they are.
-- Health, pens, cash and items carry over between levels. Dying (or beating Glacier) returns to the title screen.
+- Health, pens, cash and items carry over between levels. Dying plays a short scene (the body falls, its ghost floats up and the survivor is "moving to the cloud", which Glacier owns) and returns to the title screen, as does beating Glacier.
 
 ## Next steps (suggested order)
 

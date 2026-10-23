@@ -97,7 +97,7 @@ export class UIScene extends Phaser.Scene {
     this.listen('timer', ({ text, color: fill }) => this.timerText.setText(text ?? '').setColor(fill ?? PAL.yellow));
     this.listen('objective', ({ text }) => this.objectiveText.setText(text ?? ''));
     this.listen('banner', ({ title, line, holdMs }) => this.showBanner(title, line, holdMs));
-    this.listen('player:died', () => this.showBanner('SURVIVOR OFFLINE', 'Glacier wins this round.'));
+    this.listen('player:died', () => this.showUpload());
     this.listen('game:won', ({ stats }) =>
       this.showBanner('GLACIER DEFEATED', `The network is back in human hands. Allied software runs again. ${stats.pln} PLN left, ${stats.items.length} items.`, 5200),
     );
@@ -164,10 +164,26 @@ export class UIScene extends Phaser.Scene {
     this.bossBar.fillStyle(color(PAL.cyan), 1).fillRect(x, y, Math.max(0, (w * hp) / max), 6);
   }
 
+  /** Death screen: the survivor's mind uploads to the cloud... which Glacier owns. */
+  private showUpload(): void {
+    this.showBanner('MOVING TO THE CLOUD...', 'Uploading survivor.exe  0%', 4200);
+    const line = this.banner.list[1] as Phaser.GameObjects.Text;
+    const progress = { pct: 0 };
+    this.tweens.add({
+      targets: progress,
+      pct: 100,
+      delay: 300,
+      duration: 2000,
+      ease: 'Cubic.out',
+      onUpdate: () => line.setText(`Uploading survivor.exe  ${Math.floor(progress.pct)}%`),
+      onComplete: () => line.setText('Upload complete. The cloud belongs to Glacier now.').setColor(PAL.red),
+    });
+  }
+
   private showBanner(title: string, line: string, holdMs = Math.max(2600, 1000 + line.length * 50)): void {
     const [t, l] = this.banner.list as Phaser.GameObjects.Text[];
     t.setText(title);
-    l.setText(line);
+    l.setText(line).setColor(PAL.white);
     this.tweens.killTweensOf(this.banner);
     this.banner.setAlpha(0);
     this.tweens.chain({
