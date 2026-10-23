@@ -4,6 +4,7 @@ import { off, on, type GameEventName, type GameEvents } from '../core/events';
 import { PAL } from '../gfx/pixels';
 import { TEX } from '../gfx/textures';
 import { DIRS, DIR_VEC, findRoomAt, type Dungeon, type Room } from '../world/dungeon';
+import { hiDpi } from './ui/hiDpi';
 
 const CELL_W = 12;
 const CELL_H = 9;
@@ -43,6 +44,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   create(): void {
+    hiDpi(this);
     // The scene is reused for every run; the old heart images were destroyed with the last one.
     this.hearts = [];
     this.map = this.add.graphics();

@@ -4,6 +4,7 @@ import { PAL } from '../gfx/pixels';
 import { TEX } from '../gfx/textures';
 import { T } from '../world/tiles';
 import { CONTROLS_TEXT, MenuList } from './ui/MenuList';
+import { hiDpi } from './ui/hiDpi';
 
 const color = (hex: string) => Phaser.Display.Color.HexStringToColor(hex).color;
 
@@ -16,6 +17,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    hiDpi(this);
     this.drawOffice();
     this.add.rectangle(VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, color(PAL.black), 0.55);
 

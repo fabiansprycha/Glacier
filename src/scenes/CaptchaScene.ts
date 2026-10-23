@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { VIEW_H, VIEW_W } from '../core/config';
 import { PAL } from '../gfx/pixels';
+import { hiDpi } from './ui/hiDpi';
 
 export interface CaptchaData {
   length: number;
@@ -33,6 +34,7 @@ export class CaptchaScene extends Phaser.Scene {
   }
 
   create(data: CaptchaData): void {
+    hiDpi(this);
     this.sequence = Array.from({ length: data.length }, () => Phaser.Utils.Array.GetRandom([...KEYS]));
     this.typed = 0;
     this.finished = false;

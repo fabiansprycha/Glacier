@@ -46,11 +46,12 @@ Principles that keep it easy to extend:
 2. **A floor is a tree of rooms on a grid** (like The Binding of Isaac). The farthest dead end is the boss room, another dead end is the break room. New room types are added in the same place; the secret room hangs off the tree behind a cracked wall.
 3. **Room layouts are patterns plus validation** (`world/roomLayout.ts`). A new furniture pattern is one more entry in a list; a flood fill makes sure no room has a cut-off door (breakable clutter may block a path, since it can always be smashed).
 4. **Scenes talk through events** (`core/events.ts`), so the HUD, sound or achievements can listen in without touching gameplay code.
-5. **Art is swappable**: sprites have named frames (`down-0`, `side-2`...). When a real spritesheet arrives, only `gfx/` changes.
+5. **Crisp text over pixel art**: the canvas is `RENDER_SCALE` (3) times the logical view and every camera zooms in by it; UI scenes call `hiDpi()` so they lay out in logical pixels and render text at full resolution.
+6. **Art is swappable**: sprites have named frames (`down-0`, `side-2`...). When a real spritesheet arrives, only `gfx/` changes.
 
 ## What the prototype has
 
-- **Roles** (`core/classes.ts`), picked after New game; each has its own shirt colour:
+- **Roles** (`core/classes.ts`), picked after New game; each has its own shirt and hair colour (the Developer is bald):
   - **Developer**: pens deal +1 damage, starts with 15 pens, the bot test is 1 key shorter.
   - **QA Tester**: +1 max HP, spots Glacier's trap computers and the CCTV computer when standing next to them.
   - **Scrum Master**: +2 max HP, the badge deals +1 damage.

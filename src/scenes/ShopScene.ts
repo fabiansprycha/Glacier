@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { VIEW_H, VIEW_W } from '../core/config';
 import type { PlayerStats } from '../core/stats';
 import { PAL } from '../gfx/pixels';
+import { hiDpi } from './ui/hiDpi';
 
 export interface ShopOffer {
   name: string;
@@ -34,6 +35,7 @@ export class ShopScene extends Phaser.Scene {
   }
 
   create(data: ShopData): void {
+    hiDpi(this);
     this.data_ = data;
     this.selected = 0;
     const cx = VIEW_W / 2;

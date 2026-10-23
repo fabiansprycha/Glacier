@@ -4,7 +4,7 @@ import { Rng } from '../core/rng';
 import { T, TILE_COUNT } from '../world/tiles';
 import { PAL, drawPixels } from './pixels';
 import type { HeroClass } from '../core/classes';
-import { BOSSES, CAMERA, DRONE, ELEVATOR, FX, GLACIER, HERO_COLORS, HERO_FRAMES, HERO_SHIRTS, ICONS, TERMINAL } from './sprites';
+import { BOSSES, CAMERA, DRONE, ELEVATOR, FX, GLACIER, HERO_COLORS, HERO_FRAMES, HERO_HAIR, HERO_SHIRTS, ICONS, TERMINAL } from './sprites';
 
 export const TEX = {
   tiles: 'tiles',
@@ -29,7 +29,7 @@ export function heroTexture(cls: HeroClass): string {
 export function createTextures(scene: Phaser.Scene): void {
   createTileset(scene);
   for (const cls of Object.keys(HERO_SHIRTS) as HeroClass[]) {
-    createSheet(scene, heroTexture(cls), HERO_FRAMES, { ...HERO_COLORS, c: HERO_SHIRTS[cls] });
+    createSheet(scene, heroTexture(cls), HERO_FRAMES, { ...HERO_COLORS, ...HERO_HAIR[cls], c: HERO_SHIRTS[cls] });
   }
   createSheet(scene, TEX.terminal, [{ name: '0', rows: TERMINAL.rows }], TERMINAL.colors);
   createSheet(scene, TEX.glacier, [{ name: '0', rows: GLACIER.rows }], GLACIER.colors);

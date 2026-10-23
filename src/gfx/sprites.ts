@@ -2,40 +2,51 @@ import { PAL } from './pixels';
 
 /** Placeholder pixel art. Swap for real spritesheets later, the frame names stay the same. */
 
-/** Bald survivor with a company badge on a lanyard; the shirt colour depends on the class. */
-export const HERO_COLORS = { k: PAL.black, b: PAL.grey, s: PAL.yellow, c: PAL.red, y: PAL.white, d: PAL.navy };
+/**
+ * Survivor with a company badge on a lanyard. The shirt (c) and hair (h, with a highlight g) depend on the class:
+ * the Developer is bald, so his "hair" is skin with a shine.
+ */
+export const HERO_COLORS = { k: PAL.black, s: PAL.yellow, c: PAL.red, y: PAL.white, d: PAL.navy, h: PAL.grey, g: PAL.grey };
 
 /** Shirt colour per class (see core/classes.ts). */
 export const HERO_SHIRTS = { dev: PAL.red, qa: PAL.green, scrum: PAL.orange, analyst: PAL.blue } as const;
 
+/** Hair colour and highlight per class. */
+export const HERO_HAIR = {
+  dev: { h: PAL.yellow, g: PAL.white },
+  qa: { h: PAL.orange, g: PAL.orange },
+  scrum: { h: PAL.grey, g: PAL.silver },
+  analyst: { h: PAL.purple, g: PAL.purple },
+} as const;
+
 const HERO_HEAD_DOWN = [
   '................',
   '.....kkkkkk.....',
-  '....kyyssssk....',
-  '...kssssssssk...',
-  '...kssssssssk...',
-  '...kssksskssk...',
-  '...kssssssssk...',
+  '....kgghhhhk....',
+  '...khhhhhhhhk...',
+  '...khsssssshk...',
+  '...khsksskshk...',
+  '...khsssssshk...',
   '....kksssskk....',
 ];
 const HERO_HEAD_UP = [
   '................',
   '.....kkkkkk.....',
-  '....kssssyyk....',
-  '...kssssssssk...',
-  '...kssssssssk...',
-  '...kssssssssk...',
-  '...kssssssssk...',
-  '....kksssskk....',
+  '....khhhhggk....',
+  '...khhhhhhhhk...',
+  '...khhhhhhhhk...',
+  '...khhhhhhhhk...',
+  '...khhhhhhhhk...',
+  '....kkhhhhkk....',
 ];
 const HERO_HEAD_SIDE = [
   '................',
   '.....kkkkkk.....',
-  '....kyyssssk....',
-  '...kssssssssk...',
-  '...kssssssssk...',
-  '...kssssssksk...',
-  '...kssssssssk...',
+  '....kgghhhhk....',
+  '...khhhhhhhhk...',
+  '...khhhsssssk...',
+  '...khhhsssksk...',
+  '...khhhsssssk...',
   '....kkssssskk...',
 ];
 const HERO_BODY = [

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PLAYER_SPEED, ROOM_H, ROOM_W, TILE, ZOOM } from '../core/config';
+import { PLAYER_SPEED, ROOM_H, ROOM_W, TILE, ZOOM, RENDER_SCALE } from '../core/config';
 import { emit } from '../core/events';
 import { ITEMS, grantItem, hasItem, unownedItems, type ItemId } from '../core/items';
 import { Controls } from '../core/input';
@@ -170,7 +170,7 @@ export class GameScene extends Phaser.Scene {
     this.placeRoomContents();
 
     const cam = this.cameras.main;
-    cam.setZoom(ZOOM);
+    cam.setZoom(ZOOM * RENDER_SCALE);
     cam.setBackgroundColor('#1a1c2c');
     cam.roundPixels = true;
 

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { VIEW_H, VIEW_W } from '../core/config';
 import { PAL } from '../gfx/pixels';
 import { CONTROLS_TEXT, MenuList } from './ui/MenuList';
+import { hiDpi } from './ui/hiDpi';
 
 export interface PauseData {
   onResume: () => void;
@@ -18,6 +19,7 @@ export class PauseScene extends Phaser.Scene {
   }
 
   create(data: PauseData): void {
+    hiDpi(this);
     const cx = VIEW_W / 2;
     const close = (then: () => void) => {
       this.scene.stop();

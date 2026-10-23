@@ -5,10 +5,11 @@ import { randomSeed } from '../core/rng';
 import { PAL } from '../gfx/pixels';
 import { heroTexture } from '../gfx/textures';
 import { Player } from '../entities/Player';
+import { hiDpi } from './ui/hiDpi';
 
 const color = (hex: string) => Phaser.Display.Color.HexStringToColor(hex).color;
 const CARD_W = 108;
-const CARD_H = 210;
+const CARD_H = 260;
 const GAP = 8;
 
 /** Pick an office role before the run: A/D to browse, Space or Enter to start, Esc to go back. */
@@ -21,6 +22,7 @@ export class ClassScene extends Phaser.Scene {
   }
 
   create(): void {
+    hiDpi(this);
     this.selected = 0;
     this.add.text(VIEW_W / 2, 24, 'CHOOSE YOUR ROLE', { fontFamily: 'monospace', fontSize: '18px', color: PAL.cyan }).setOrigin(0.5);
 
@@ -33,12 +35,12 @@ export class ClassScene extends Phaser.Scene {
       const bg = this.add.rectangle(cx, top + CARD_H / 2, CARD_W, CARD_H, color(PAL.slate));
       Player.createAnims(this, heroTexture(id));
       const hero = this.add.sprite(cx, top + 34, heroTexture(id), 'down-0').setScale(3);
-      const name = this.add.text(cx, top + 68, def.name, { fontFamily: 'monospace', fontSize: '11px', color: PAL.white }).setOrigin(0.5, 0);
-      this.add
-        .text(cx, top + 84, def.tagline, { fontFamily: 'monospace', fontSize: '8px', color: PAL.silver, align: 'center', wordWrap: { width: CARD_W - 10 } })
+      const name = this.add.text(cx, top + 68, def.name, { fontFamily: 'monospace', fontSize: '12px', color: PAL.white }).setOrigin(0.5, 0);
+      const tagline = this.add
+        .text(cx, top + 84, def.tagline, { fontFamily: 'monospace', fontSize: '9px', color: PAL.silver, align: 'center', wordWrap: { width: CARD_W - 10 } })
         .setOrigin(0.5, 0);
-      this.add.text(cx - CARD_W / 2 + 6, top + 116, def.perks.map((p) => `+ ${p}`).join('\n'), {
-        fontFamily: 'monospace', fontSize: '8px', color: PAL.lime, wordWrap: { width: CARD_W - 12 }, lineSpacing: 3,
+      this.add.text(cx - CARD_W / 2 + 6, tagline.y + tagline.height + 8, def.perks.map((p) => `+ ${p}`).join('\n'), {
+        fontFamily: 'monospace', fontSize: '9px', color: PAL.lime, wordWrap: { width: CARD_W - 12 }, lineSpacing: 1,
       });
       return { bg, hero, name };
     });

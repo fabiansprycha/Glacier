@@ -4,6 +4,7 @@ import { CLASSES } from '../core/classes';
 import { ITEMS } from '../core/items';
 import type { PlayerStats } from '../core/stats';
 import { PAL } from '../gfx/pixels';
+import { hiDpi } from './ui/hiDpi';
 
 export interface InventoryData {
   stats: Readonly<PlayerStats>;
@@ -23,6 +24,7 @@ export class InventoryScene extends Phaser.Scene {
   }
 
   create(data: InventoryData): void {
+    hiDpi(this);
     this.data_ = data;
     const { stats } = data;
     const cx = VIEW_W / 2;
