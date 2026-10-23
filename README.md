@@ -1,74 +1,74 @@
-# Glacier: opuszczone biura (prototyp)
+# Glacier: Abandoned Offices (prototype)
 
-Top-down 2D, pixel art, proceduralnie generowane pomieszczenia. Działa w przeglądarce.
+A top-down 2D pixel-art roguelike with procedurally generated rooms. Runs in the browser.
 
-## Świat
+## The world
 
-AI przejęła władzę nad światem. Soft o nazwie **Glacier** niszczy ludzi i poluje na inne softy, które sprzymierzyły się z ludźmi. Gracz przechodzi przez opuszczone biura IT: open space'y, sale konferencyjne, archiwa, pokoje socjalne i zamrożone przez Glaciera serwerownie. Każde piętro biurowca to jeden poziom, a winda w serwerowni prowadzi wyżej.
+An AI has taken over the world. A piece of software called **Glacier** destroys people and hunts down other software that sided with humans. The player makes their way through abandoned IT offices: open spaces, meeting rooms, archives, break rooms and server rooms frozen over by Glacier. Each floor of the office building is one level, and the elevator in the boss room leads up.
 
-## Uruchomienie
+## Running it
 
 ```bash
 npm install
-npm run dev          # serwer deweloperski z hot reloadem
-npm test             # testy generatora (vitest)
-npm run build        # wersja produkcyjna do dist/
-npm run build:single # jeden plik dist-single/index.html (łatwo wysłać / wrzucić gdziekolwiek)
+npm run dev          # dev server with hot reload
+npm test             # generator tests (vitest)
+npm run build        # production build in dist/
+npm run build:single # a single file, dist-single/index.html (easy to share or host anywhere)
 ```
 
-Sterowanie: WSAD (albo strzałki) to ruch, J to cios identyfikatorem na smyczy, K to rzut długopisem, spacja przeszukuje biurka, szafki i komputery, I (albo Tab) otwiera ekwipunek, R zaczyna nową grę. Wszystkie teksty w grze są po angielsku. Parametry adresu: `?seed=42` odtwarza układ, `?level=3` startuje od wybranego poziomu.
+Controls: WSAD (or arrow keys) to move, J to swing the badge on its lanyard, K to throw a pen, Space to search desks, cabinets and computers, I (or Tab) for the inventory, R for a new run. URL parameters: `?seed=42` replays a layout, `?level=3` starts on a given level.
 
 ## Stack
 
-- **TypeScript**: przy grze, która urośnie (statystyki, przedmioty, bossowie), typy oszczędzają mnóstwo błędów.
-- **Phaser 4**: dojrzały silnik 2D do przeglądarki, ma kamerę, tilemapy, fizykę arcade, animacje, input, dźwięk.
-- **Vite**: szybki dev server i build. **Vitest**: testy logiki bez przeglądarki.
+- **TypeScript**: in a game that will keep growing (stats, items, bosses), types save a lot of bugs.
+- **Phaser 4**: a mature 2D browser engine with a camera, tilemaps, arcade physics, animation, input and sound.
+- **Vite**: fast dev server and builds. **Vitest**: logic tests without a browser.
 
-## Architektura
+## Architecture
 
 ```
 src/
-  core/      konfiguracja, seedowany RNG, sterowanie, typowane eventy między scenami
-  world/     czysta logika świata, bez Phasera: generator lochu, układy pokoi, kafelki
-  gfx/       placeholderowa grafika rysowana kodem (paleta Sweetie 16)
-  entities/  gracz, drony, bossowie (drukarka, ochroniarz, matka roju, Glacier)
-  systems/   walka, przeszukiwanie mebli, pułapki, kamery
-  scenes/    Boot (tekstury) → Game (rozgrywka) + UI (HUD, minimapa) + Captcha (minigra) i Shop (automat) jako nakładki
-tests/       testy generatora na setkach seedów
+  core/      config, seeded RNG, controls, levels, items, typed events between scenes
+  world/     pure world logic with no Phaser: dungeon generator, room layouts, tiles, loot
+  gfx/       placeholder art drawn in code (Sweetie 16 palette)
+  entities/  player, drones, rogue printers, bosses (printer, security bot, swarm mother, Glacier)
+  systems/   combat, searching furniture, breakables, traps, security cameras
+  scenes/    Boot (textures) → Game (gameplay) + UI (HUD, minimap), with Captcha (minigame),
+             Shop (vending machine) and Inventory as overlays
+tests/       generator and loot tests over hundreds of seeds
 ```
 
-Zasady, które mają ułatwić rozbudowę:
+Principles that keep it easy to extend:
 
-1. **Generator jest czystą funkcją seeda** (`world/dungeon.ts`). Ten sam seed daje ten sam loch, więc da się go testować, debugować i udostępniać.
-2. **Loch to drzewo pokoi na siatce** (jak w The Binding of Isaac). Najdalszy ślepy zaułek to pokój bossa, inny ślepy zaułek to skarbiec. Kolejne typy pokoi (sklep, sekret, wyzwanie) dodaje się w tym samym miejscu.
-3. **Układy pokoi to wzorce + walidacja** (`world/roomLayout.ts`). Nowy wzorzec przeszkód wystarczy dopisać do listy; flood fill pilnuje, żeby żaden pokój nie miał odciętych drzwi.
-4. **Sceny rozmawiają przez eventy** (`core/events.ts`), więc HUD, dźwięk czy osiągnięcia mogą nasłuchiwać bez grzebania w rozgrywce.
-5. **Grafika jest podmienialna**: sprite'y mają nazwane klatki (`down-0`, `side-2`...). Gdy powstanie prawdziwy spritesheet, zmienia się tylko `gfx/`.
+1. **The generator is a pure function of the seed** (`world/dungeon.ts`). The same seed always gives the same floor, so it can be tested, debugged and shared.
+2. **A floor is a tree of rooms on a grid** (like The Binding of Isaac). The farthest dead end is the boss room, another dead end is the break room. New room types are added in the same place; the secret room hangs off the tree behind a cracked wall.
+3. **Room layouts are patterns plus validation** (`world/roomLayout.ts`). A new furniture pattern is one more entry in a list; a flood fill makes sure no room has a cut-off door (breakable clutter may block a path, since it can always be smashed).
+4. **Scenes talk through events** (`core/events.ts`), so the HUD, sound or achievements can listen in without touching gameplay code.
+5. **Art is swappable**: sprites have named frames (`down-0`, `side-2`...). When a real spritesheet arrives, only `gfx/` changes.
 
-## Co jest w prototypie
+## What the prototype has
 
-- **4 poziomy** (`core/levels.ts`): Open space → Dział IT → Centrum danych → Rdzeń Glaciera. Każdy ma swoją liczbę pokoi, dronów, pułapek i trudność minigry. Kolejny poziom dodaje się jednym wpisem w tablicy `LEVELS`.
-- **Bossowie**: Drukarka sieciowa (wachlarze i pierścienie kartek), Ochroniarz-bot (sygnalizuje szarżę i taranuje do ściany), Matka roju (trzyma dystans, wypuszcza drony), a na końcu **Glacier** (lodowe odłamki, w ostatniej 1/3 HP wzywa drony). Pokonanie Glaciera kończy grę zwycięstwem.
-- **Walka**: identyfikator na smyczy (zamach łukiem, odrzut) i rzut długopisem (1 długopis na rzut). Drony i pociski latają nad meblami.
-- **Drony** w zwykłych pokojach. Wejście do pokoju z dronami zamyka drzwi roletami, dopóki ich nie pokonasz.
-- **Pułapki**: płyty z zerwanym kablem. Cykl: spokój, iskry (ostrzeżenie), prąd (obrażenia).
-- **Kamery** w części pokoi bez dronów: obracają się i pokazują żółty stożek widzenia. Wejście w stożek włącza alarm, drzwi się zamykają i wlatuje dron (na wyższych poziomach więcej). Po alarmie kamera gaśnie.
-- **Przeszukiwanie** (spacja) biurek (głównie długopisy), szafek (apteczki, pieniądze) i komputerów (pieniądze). Tylko gdy w pokoju nie ma dronów.
-- **Komputery Glaciera** wyglądają jak zwykłe, więc nie wiadomo, który to pułapka. Przeszukanie takiego komputera otwiera minigrę „Udowodnij, że jesteś botem”. Trzeba wpisać sekwencję WSAD, zanim skończy się czas. Sukces daje bogaty łup, błąd albo koniec czasu włącza alarm: przez drzwi wlatują dodatkowe drony.
-- **Przeszkody do rozwalenia**: kartony (3 ciosy), krzesła i suche rośliny (2), kwiatki (1). Rozwala się je identyfikatorem albo długopisami; czasem wypadnie z nich złotówka albo długopis. Bywa barykada przed drzwiami.
-- **Zbuntowane drukarki**: zwykli wrogowie obok dronów (30–40% wrogów w pokojach). Stoją w miejscu i co 2 sekundy strzelają kartką papieru w gracza.
-- **Balans bossów**: bossowie mają 2,5 raza więcej HP (45 / 60 / 70, Glacier 110) i liczą najwyżej jeden długopis na 0,22 s, więc wachlarz z długopisu 4-kolorowego nie topi ich w sekundę.
-- **Sekretny parking podziemny** (poziom 1): za pękniętą ścianą w jednym z pokoi. Rozwal ją identyfikatorem albo długopisami, wejdź, przetrwaj 3 fale wrogów, nagroda: 10 PLN i przedmiot.
-- **Ekwipunek** (I / Tab): statystyki i lista przedmiotów z opisami; na HUD jest tylko licznik, żeby nic nie zasłaniało gry.
-- **Automaty** (2 na poziom): w każdym jedna przekąska (batonik +2 HP albo paczka długopisów) i dwa przedmioty, których jeszcze nie masz. Płacisz złotówkami (PLN): 1 zł za drona, 6 zł za bossa, reszta z przeszukiwania.
-- **Przedmioty z efektami** (`core/items.ts`): długopis 4-kolorowy (3 długopisy naraz), długopis żelowy (przebija wrogów), zszywacz (szybsze rzuty), kieszonka na długopisy, smycz bungee (dłuższy cios), identyfikator VIP (cios niszczy pociski), opaska antystatyczna (odporność na pułapki), bluza z kapturem (kamery widzą z bliska), firmowy kubek (+1 HP za czysty pokój), słuchawki z ANC (więcej czasu w minigrze), espresso (szybszy ruch) oraz statystyczne: stalowa smycz, pióro wieczne, termos. Każdy przedmiot można mieć raz. Źródła: automaty, łupy, komputery Glaciera, terminal ARGUS i bossowie.
-- **Terminal ARGUS** (sojuszniczy soft) w pokoju socjalnym: pełna naprawa, długopisy do 10, jeden przedmiot.
-- HP, długopisy, pieniądze i ulepszenia przechodzą między poziomami. Śmierć zaczyna nową grę.
+- **4 levels** (`core/levels.ts`): Open space → IT department → Data centre → Glacier's core. Each has its own room count, enemies, traps and minigame difficulty. A new level is one more entry in `LEVELS`.
+- **Bosses**: the Network printer (fans and rings of paper), the Security bot (telegraphs a charge and rams into the wall), the Swarm mother (keeps its distance and launches drones) and finally **Glacier** (ice shards, calls drones in its last third of health). Beating Glacier wins the run.
+- **Boss balance**: bosses have 45 / 60 / 70 health (Glacier 110) and take at most one pen every 0.22 s, so a fan of pens from the four-colour pen does not melt them in a second.
+- **Combat**: the badge on a lanyard (an arc swing with knockback) and thrown pens (one pen per throw, pens are ammo). Drones and shots fly over furniture.
+- **Enemies**: drones that chase you, and rogue printers (30–40% of room enemies) that stand still and shoot a sheet of paper at you every 2 seconds. Entering a room with enemies shuts its doors with shutters until they are gone.
+- **Traps**: floor plates with a torn cable. Cycle: idle, sparks (warning), current (damage).
+- **Security cameras** in some rooms without enemies: they sweep and show a yellow vision cone. Stepping into it raises the alarm, the doors shut and drones fly in (more on higher levels). The camera goes dark after the alarm. Cameras keep sweeping while you search.
+- **Searching** (Space) desks (mostly pens), cabinets (first aid, cash) and computers (cash). Only once the room has no enemies.
+- **Glacier's computers** look exactly like ordinary ones, so you never know which one is a trap. Searching one starts the "Prove you are a bot" minigame: type the WSAD sequence before time runs out. Passing gives rich loot; failing or running out of time raises the alarm and extra drones fly in.
+- **Breakable obstacles**: boxes (3 hits), chairs and dried plants (2), potted flowers (1). Smash them with the badge or pens; sometimes a coin or a pen drops out. Sometimes a barricade blocks the way in front of a door.
+- **Secret underground car park** (level 1): behind a cracked wall in one of the rooms. Smash the wall, walk in, survive 3 waves of enemies; the reward is 10 PLN and an item.
+- **Inventory** (I / Tab): stats and the list of items with descriptions. The HUD only shows a counter, so nothing covers the game.
+- **Vending machines** (2 per level): each sells one snack (protein bar +2 HP or a pack of pens) and two items you do not own yet. You pay in PLN: 1 per drone, 6 per boss, the rest from searching.
+- **Items with effects** (`core/items.ts`): four-colour pen (3 pens per throw), gel pen (pierces enemies), stapler (faster throws), pen pocket, bungee lanyard (longer swing), VIP badge (swings destroy shots), antistatic wristband (trap immunity), hoodie (cameras only see you up close), company mug (+1 HP per cleared room), ANC headphones (more time in the minigame), double espresso (faster movement), plus stat items: steel lanyard, fountain pen, coffee thermos. Each item can be owned once. Sources: vending machines, loot, Glacier's computers, the ARGUS terminal, bosses and the secret room.
+- **ARGUS terminal** (allied software) in the break room: full repair, pens up to 10, one item.
+- Health, pens, cash and items carry over between levels. Dying starts a new run.
 
-## Następne kroki (propozycja kolejności)
+## Next steps (suggested order)
 
-1. Więcej typów przeciwników (np. strzelające kamery) i drop z pokonanych dronów. Więcej rodzajów pułapek.
-2. Aktywne przedmioty z ładowaniem (np. zagłuszacz dronów), synergie między przedmiotami.
-3. Kolejne fazy Glaciera (np. zamrażanie podłogi), inne minigry hakerskie.
-4. Progresja: poziom postaci / drzewko ulepszeń między runami, zapis w localStorage.
-5. Prawdziwa grafika i dźwięk.
+1. More enemy types (e.g. shooting cameras) and drops from defeated enemies. More kinds of traps.
+2. Active items with a cooldown (e.g. a drone jammer), synergies between items.
+3. More Glacier phases (e.g. freezing the floor), other hacking minigames.
+4. Progression: character levels / an upgrade tree between runs, saved in localStorage.
+5. Real art and sound.
