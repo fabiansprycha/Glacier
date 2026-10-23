@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { CLASS_IDS } from '../core/classes';
 import { LEVELS } from '../core/levels';
 import { createTextures } from '../gfx/textures';
 
@@ -21,6 +22,9 @@ export class BootScene extends Phaser.Scene {
     }
     // HUD first, so it is listening before the first level is announced.
     this.scene.launch('ui');
-    this.scene.start('game', { seed, level });
+    // ?class=qa picks the role when skipping the menu (dev by default).
+    const cls = params.get('class');
+    const heroClass = CLASS_IDS.find((id) => id === cls) ?? 'dev';
+    this.scene.start('game', { seed, level, heroClass });
   }
 }

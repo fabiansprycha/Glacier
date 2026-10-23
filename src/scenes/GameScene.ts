@@ -9,7 +9,8 @@ import { newPlayerStats, type PlayerStats } from '../core/stats';
 import { Drone, GlacierBoss, GuardBoss, MotherBoss, PrinterBoss, RoguePrinter, type Boss, type Enemy } from '../entities/Enemy';
 import { Player } from '../entities/Player';
 import { PAL } from '../gfx/pixels';
-import { TEX } from '../gfx/textures';
+import { TEX, heroTexture } from '../gfx/textures';
+import { isClass, type HeroClass } from '../core/classes';
 import { Breakables } from '../systems/Breakables';
 import { Combat } from '../systems/Combat';
 import { Search, type SearchTarget } from '../systems/Search';
@@ -30,6 +31,8 @@ export interface GameSceneData {
   level?: number;
   /** Carried over when taking the elevator; a fresh run when missing. */
   stats?: PlayerStats;
+  /** Class for a fresh run (ignored when stats are carried over). */
+  heroClass?: HeroClass;
 }
 
 const SEARCH_NAMES: Partial<Record<number, string>> = {
@@ -110,7 +113,7 @@ export class GameScene extends Phaser.Scene {
 
   create(data: GameSceneData): void {
     this.level = data.level ?? 1;
-    this.stats = data.stats ?? newPlayerStats();
+    this.stats = data.stats ?? newPlayerStats(data.heroClass);
     const seed = data.seed ?? randomSeed();
     this.dungeon = generateDungeon({ seed, level: levelDef(this.level) });
     this.visited = new Set();
@@ -135,7 +138,7 @@ export class GameScene extends Phaser.Scene {
     [this.base] = solid;
 
     const start = tileCenter(this.dungeon.start, ROOM_CENTER.x, ROOM_CENTER.y);
-    this.player = new Player(this, start.x, start.y);
+    this.player = new Player(this, start.x, start.y, heroTexture(this.stats.heroClass));
     this.physics.add.collider(this.player, solid);
     this.controls = new Controls(this);
     this.search = new Search(this, solid[1]);
@@ -466,7 +469,12 @@ export class GameScene extends Phaser.Scene {
     else if (vending) prompt = roomBusy ? 'Deal with the enemies first' : '[Space] Vending machine';
     else if (coffee) prompt = '[Space] Grab an espresso';
     else if (target && roomBusy) prompt = 'Deal with the enemies first';
-    else if (target) prompt = `[Space] Search the ${SEARCH_NAMES[target.tile] ?? 'furniture'}`;
+    else if (target) {
+      prompt = `[Space] Search the ${SEARCH_NAMES[target.tile] ?? 'furniture'}`;
+      // QA testers smell a bug up close: they can tell which computers are not what they seem.
+      if (isClass(this.stats, 'qa') && target.tile === T.DESK_PC_GLACIER) prompt += ' (QA: Glacier trap!)';
+      if (isClass(this.stats, 'qa') && target.tile === T.CAMERA_PC) prompt += ' (QA: runs the CCTV)';
+    }
     if (prompt !== this.lastPrompt) {
       this.lastPrompt = prompt;
       emit(this.game, 'prompt', { text: prompt });
@@ -492,7 +500,10 @@ export class GameScene extends Phaser.Scene {
     this.boostUntil = this.time.now + BOOST_MS;
     this.statsChanged();
     this.player.setTint(color(PAL.yellow));
-    this.toast(`Fresh espresso! Faster moves and attacks for ${BOOST_MS / 1000} s.`, PAL.yellow);
+    // The first machine also hands out the Double espresso item: it comes from nowhere else.
+    const extra = hasItem(this.stats, 'espresso') ? '' : ` ${grantItem(this.stats, 'espresso')}`;
+    this.statsChanged();
+    this.toast(`Fresh espresso! Faster moves and attacks for ${BOOST_MS / 1000} s.${extra}`, PAL.yellow);
   }
 
   private updateBoost(): void {
@@ -534,7 +545,7 @@ export class GameScene extends Phaser.Scene {
     const level = this.dungeon.level;
     const room = this.currentRoom;
     const data: CaptchaData = {
-      length: level.captchaLength,
+      length: level.captchaLength - (isClass(this.stats, 'dev') ? 1 : 0),
       timeMs: level.captchaMs * (hasItem(this.stats, 'headphones') ? 1.6 : 1),
       onDone: (passed) => {
         this.resumeFromOverlay();
@@ -598,6 +609,8 @@ export class GameScene extends Phaser.Scene {
       .slice(0, 2)
       .map((id: ItemId) => ({ ...ITEMS[id], sold: false, give: (s: PlayerStats) => grantItem(s, id) }));
     const stock = [consumable, ...items];
+    // Analysts know where the budget went.
+    if (isClass(this.stats, 'analyst')) for (const ware of stock) ware.price = Math.max(1, Math.round(ware.price * 0.75));
     this.machines.set(room.id, stock);
     return stock;
   }
@@ -695,7 +708,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private restartRun(): void {
-    this.restartWith({ seed: randomSeed(), level: 1 });
+    this.restartWith({ seed: randomSeed(), level: 1, heroClass: this.stats.heroClass });
   }
 
   private restartWith(data: GameSceneData, delay = 0): void {

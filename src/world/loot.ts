@@ -1,5 +1,6 @@
 import type { PlayerStats } from '../core/stats';
 import { grantItem, unownedItems } from '../core/items';
+import { isClass } from '../core/classes';
 import { Rng } from '../core/rng';
 import { T } from './tiles';
 
@@ -26,8 +27,10 @@ const pens = (n: number): Loot => ({
 const pln = (n: number): Loot => ({
   id: 'pln',
   apply: (s) => {
-    s.pln += n;
-    return `Cash: +${n} PLN`;
+    // Analysts always find a little extra.
+    const found = n + (isClass(s, 'analyst') ? 1 : 0);
+    s.pln += found;
+    return `Cash: +${found} PLN`;
   },
 });
 /** A random item the player does not own yet (pln if they own everything). */

@@ -39,9 +39,20 @@ describe('items', () => {
       grantItem(stats, id);
     }
     expect(new Set(stats.items).size).toBe(stats.items.length);
-    expect(stats.items.sort()).toEqual([...ITEM_IDS].sort());
+    // Every item except the espresso, which only coffee machines hand out.
+    expect(stats.items.sort()).toEqual(ITEM_IDS.filter((id) => id !== 'espresso').sort());
     expect(unownedItems(stats, 1)).toEqual([]);
     expect(stats.maxHp).toBe(8);
     expect(stats.meleeDamage).toBe(3);
+  });
+
+  it('give each class its own start', () => {
+    expect(newPlayerStats('dev').rangedDamage).toBe(2);
+    expect(newPlayerStats('dev').pens).toBe(15);
+    expect(newPlayerStats('qa').maxHp).toBe(7);
+    expect(newPlayerStats('scrum').maxHp).toBe(8);
+    expect(newPlayerStats('scrum').meleeDamage).toBe(3);
+    expect(newPlayerStats('analyst').pln).toBe(6);
+    expect(newPlayerStats('analyst').heroClass).toBe('analyst');
   });
 });

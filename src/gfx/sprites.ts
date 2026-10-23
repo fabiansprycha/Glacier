@@ -2,37 +2,40 @@ import { PAL } from './pixels';
 
 /** Placeholder pixel art. Swap for real spritesheets later, the frame names stay the same. */
 
-/** Survivor in a red hoodie with a company badge on a lanyard. */
+/** Bald survivor with a company badge on a lanyard; the shirt colour depends on the class. */
 export const HERO_COLORS = { k: PAL.black, b: PAL.grey, s: PAL.yellow, c: PAL.red, y: PAL.white, d: PAL.navy };
+
+/** Shirt colour per class (see core/classes.ts). */
+export const HERO_SHIRTS = { dev: PAL.red, qa: PAL.green, scrum: PAL.orange, analyst: PAL.blue } as const;
 
 const HERO_HEAD_DOWN = [
   '................',
   '.....kkkkkk.....',
-  '....kbbbbbbk....',
-  '...kbbbbbbbbk...',
-  '...kbssssssbk...',
-  '...kbskssksbk...',
-  '...kbssssssbk...',
+  '....kyyssssk....',
+  '...kssssssssk...',
+  '...kssssssssk...',
+  '...kssksskssk...',
+  '...kssssssssk...',
   '....kksssskk....',
 ];
 const HERO_HEAD_UP = [
   '................',
   '.....kkkkkk.....',
-  '....kbbbbbbk....',
-  '...kbbbbbbbbk...',
-  '...kbbbbbbbbk...',
-  '...kbbbbbbbbk...',
-  '...kbbbbbbbbk...',
-  '....kkbbbbkk....',
+  '....kssssyyk....',
+  '...kssssssssk...',
+  '...kssssssssk...',
+  '...kssssssssk...',
+  '...kssssssssk...',
+  '....kksssskk....',
 ];
 const HERO_HEAD_SIDE = [
   '................',
   '.....kkkkkk.....',
-  '....kbbbbbbk....',
-  '...kbbbbbbbbk...',
-  '...kbbbsssssk...',
-  '...kbbbsssksk...',
-  '...kbbbsssssk...',
+  '....kyyssssk....',
+  '...kssssssssk...',
+  '...kssssssssk...',
+  '...kssssssksk...',
+  '...kssssssssk...',
   '....kkssssskk...',
 ];
 const HERO_BODY = [

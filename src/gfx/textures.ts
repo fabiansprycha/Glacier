@@ -3,7 +3,8 @@ import { TILE } from '../core/config';
 import { Rng } from '../core/rng';
 import { T, TILE_COUNT } from '../world/tiles';
 import { PAL, drawPixels } from './pixels';
-import { BOSSES, CAMERA, DRONE, ELEVATOR, FX, GLACIER, HERO_COLORS, HERO_FRAMES, ICONS, TERMINAL } from './sprites';
+import type { HeroClass } from '../core/classes';
+import { BOSSES, CAMERA, DRONE, ELEVATOR, FX, GLACIER, HERO_COLORS, HERO_FRAMES, HERO_SHIRTS, ICONS, TERMINAL } from './sprites';
 
 export const TEX = {
   tiles: 'tiles',
@@ -19,10 +20,17 @@ export const TEX = {
   camera: 'camera',
 } as const;
 
+/** Hero spritesheet for a class: same frames, different shirt. */
+export function heroTexture(cls: HeroClass): string {
+  return `${TEX.hero}-${cls}`;
+}
+
 /** Generates every placeholder texture at boot, so the prototype needs no asset files. */
 export function createTextures(scene: Phaser.Scene): void {
   createTileset(scene);
-  createSheet(scene, TEX.hero, HERO_FRAMES, HERO_COLORS);
+  for (const cls of Object.keys(HERO_SHIRTS) as HeroClass[]) {
+    createSheet(scene, heroTexture(cls), HERO_FRAMES, { ...HERO_COLORS, c: HERO_SHIRTS[cls] });
+  }
   createSheet(scene, TEX.terminal, [{ name: '0', rows: TERMINAL.rows }], TERMINAL.colors);
   createSheet(scene, TEX.glacier, [{ name: '0', rows: GLACIER.rows }], GLACIER.colors);
   createSheet(scene, TEX.elevator, [{ name: '0', rows: ELEVATOR.rows }], ELEVATOR.colors);

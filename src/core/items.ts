@@ -12,6 +12,8 @@ export interface ItemDef {
   /** Price in pln at a vending machine. */
   price: number;
   apply?: (stats: PlayerStats) => void;
+  /** Never in loot, shops or rewards: only a specific source gives it. */
+  machineOnly?: boolean;
 }
 
 export const ITEMS = {
@@ -26,7 +28,8 @@ export const ITEMS = {
       s.hp += 2;
     },
   },
-  espresso: { name: 'Double espresso', desc: 'Move faster', price: 6 },
+  // Only the office espresso machines hand this one out.
+  espresso: { name: 'Double espresso', desc: 'Move faster', price: 6, machineOnly: true },
   fourColorPen: { name: 'Four-colour pen', desc: '3 pens per throw, costs 1', price: 14 },
   gelPen: { name: 'Gel pen', desc: 'Pens fly through enemies', price: 10 },
   stapler: { name: 'Stapler', desc: 'Throw twice as fast', price: 13 },
@@ -58,5 +61,5 @@ export function grantItem(stats: PlayerStats, id: ItemId): string {
 
 /** Items the player does not own yet, in a seeded random order. */
 export function unownedItems(stats: PlayerStats, seed: number): ItemId[] {
-  return new Rng(seed).shuffle(ITEM_IDS.filter((id) => !hasItem(stats, id)));
+  return new Rng(seed).shuffle(ITEM_IDS.filter((id) => !hasItem(stats, id) && !(ITEMS[id] as ItemDef).machineOnly));
 }

@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { PLAYER_SPEED } from '../core/config';
-import { TEX } from '../gfx/textures';
 import type { HeroFacing } from '../gfx/sprites';
 
 export interface MoveInput {
@@ -21,13 +20,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private invulnerableUntil = 0;
   private knockbackUntil = 0;
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, TEX.hero, 'down-0');
+  constructor(scene: Phaser.Scene, x: number, y: number, private readonly sheet: string) {
+    super(scene, x, y, sheet, 'down-0');
     scene.add.existing(this);
     scene.physics.add.existing(this);
     // Collide with the feet only, so the head can overlap walls (classic top-down look).
     this.body.setSize(10, 6).setOffset(3, 10);
-    Player.createAnims(scene);
+    Player.createAnims(scene, sheet);
   }
 
   /** Point where the player stands; used for room detection and depth sorting. */
@@ -64,7 +63,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (Math.abs(input.x) > Math.abs(input.y)) this.facing = 'side';
       else this.facing = input.y < 0 ? 'up' : 'down';
       if (input.x !== 0) this.setFlipX(input.x < 0);
-      this.anims.play(`hero-walk-${this.facing}`, true);
+      this.anims.play(`${this.sheet}-walk-${this.facing}`, true);
     }
   }
 
@@ -85,13 +84,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return true;
   }
 
-  private static createAnims(scene: Phaser.Scene): void {
+  /** Walk cycles for a hero sheet; also used by the class picker. */
+  static createAnims(scene: Phaser.Scene, sheet: string): void {
     for (const facing of ['down', 'up', 'side'] as const) {
-      const key = `hero-walk-${facing}`;
+      const key = `${sheet}-walk-${facing}`;
       if (scene.anims.exists(key)) continue;
       scene.anims.create({
         key,
-        frames: [1, 0, 2, 0].map((i) => ({ key: TEX.hero, frame: `${facing}-${i}` })),
+        frames: [1, 0, 2, 0].map((i) => ({ key: sheet, frame: `${facing}-${i}` })),
         frameRate: 8,
         repeat: -1,
       });

@@ -18,7 +18,7 @@ npm run build        # production build in dist/
 npm run build:single # a single file, dist-single/index.html (easy to share or host anywhere)
 ```
 
-Controls: WSAD (or arrow keys) to move, J to swing the badge on its lanyard, K to throw a pen, Space to search desks, cabinets and computers, I (or Tab) for the inventory, Esc (or P) to pause. The game opens on a title screen (New game, How to play); the pause menu has Resume, Restart run and Main menu. URL parameters: `?seed=42` replays a layout, `?level=3` starts on a given level (both skip the title screen).
+Controls: WSAD (or arrow keys) to move, J to swing the badge on its lanyard, K to throw a pen, Space to search desks, cabinets and computers, I (or Tab) for the inventory, Esc (or P) to pause. The game opens on a title screen (New game, How to play), then you pick a role; the pause menu has Resume, Restart run and Main menu. URL parameters: `?seed=42` replays a layout, `?level=3` starts on a given level, `?class=qa` picks the role (seed or level skip the title screen).
 
 ## Stack
 
@@ -50,6 +50,11 @@ Principles that keep it easy to extend:
 
 ## What the prototype has
 
+- **Roles** (`core/classes.ts`), picked after New game; each has its own shirt colour:
+  - **Developer**: pens deal +1 damage, starts with 15 pens, the bot test is 1 key shorter.
+  - **QA Tester**: +1 max HP, spots Glacier's trap computers and the CCTV computer when standing next to them.
+  - **Scrum Master**: +2 max HP, the badge deals +1 damage.
+  - **Analyst**: starts with 6 PLN, +1 PLN from every cash find, vending machines 25% cheaper.
 - **4 levels** (`core/levels.ts`): Open space → IT department → Data centre → Glacier's core. Each has its own room count, enemies, traps and minigame difficulty. A new level is one more entry in `LEVELS`.
 - **Bosses**: the Network printer (fans and rings of paper), the Security bot (telegraphs a charge and rams into the wall), the Swarm mother (keeps its distance and launches drones) and finally **Glacier** (ice shards, calls drones in its last third of health). Beating Glacier wins the run.
 - **Boss balance**: bosses have 45 / 60 / 70 health (Glacier 110) and take at most one pen every 0.22 s, so a fan of pens from the four-colour pen does not melt them in a second.
@@ -64,7 +69,7 @@ Principles that keep it easy to extend:
 - **Inventory** (I / Tab): stats and the list of items with descriptions. The HUD only shows a counter, so nothing covers the game.
 - **Vending machines** (2 per level): each sells one snack (protein bar +2 HP or a pack of pens) and two items you do not own yet. You pay in PLN: 1 per drone, 6 per boss, the rest from searching.
 - **Items with effects** (`core/items.ts`): four-colour pen (3 pens per throw), gel pen (pierces enemies), stapler (faster throws), pen pocket, bungee lanyard (longer swing), VIP badge (swings destroy shots), antistatic wristband (trap immunity), hoodie (cameras only see you up close), company mug (+1 HP per cleared room), ANC headphones (more time in the minigame), double espresso (faster movement), plus stat items: steel lanyard, fountain pen, coffee thermos. Each item can be owned once. Sources: vending machines, loot, Glacier's computers, the MEOLN terminal, bosses and the secret room.
-- **Espresso machines**: very rare (about 1 in 20 ordinary rooms). One espresso per machine gives 12 seconds of faster movement (+35%) and faster attacks (+60%); it works mid-fight.
+- **Espresso machines**: very rare (about 1 in 20 ordinary rooms). The first machine you use also gives the Double espresso item (it comes from nowhere else). One espresso per machine gives 12 seconds of faster movement (+35%) and faster attacks (+60%); it works mid-fight.
 - **MEOLN terminal** (allied software) in the break room: full repair, pens up to 10, one item.
 - Health, pens, cash and items carry over between levels. Dying (or beating Glacier) returns to the title screen.
 

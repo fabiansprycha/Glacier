@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { VIEW_H, VIEW_W } from '../core/config';
+import { CLASSES } from '../core/classes';
 import { ITEMS } from '../core/items';
 import type { PlayerStats } from '../core/stats';
 import { PAL } from '../gfx/pixels';
@@ -33,7 +34,7 @@ export class InventoryScene extends Phaser.Scene {
 
     this.add.rectangle(cx, VIEW_H / 2, VIEW_W, VIEW_H, color(PAL.black), 0.65);
     this.add.rectangle(cx, VIEW_H / 2, w, h, color(PAL.navy)).setStrokeStyle(2, color(PAL.cyan));
-    this.add.text(left + 12, top + 10, 'INVENTORY', { fontFamily: 'monospace', fontSize: '16px', color: PAL.cyan });
+    this.add.text(left + 12, top + 10, `INVENTORY · ${CLASSES[stats.heroClass].name.toUpperCase()}`, { fontFamily: 'monospace', fontSize: '16px', color: PAL.cyan });
     this.add
       .text(left + w - 12, top + 13, 'I / Esc close', { fontFamily: 'monospace', fontSize: '10px', color: PAL.silver })
       .setOrigin(1, 0);

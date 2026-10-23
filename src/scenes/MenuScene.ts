@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { VIEW_H, VIEW_W, TILE } from '../core/config';
-import { randomSeed } from '../core/rng';
 import { PAL } from '../gfx/pixels';
 import { TEX } from '../gfx/textures';
 import { T } from '../world/tiles';
@@ -52,12 +51,8 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private newGame(): void {
-    this.cameras.main.fadeOut(300, 26, 28, 44);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      // HUD first, so it is listening before the first level is announced.
-      this.scene.launch('ui');
-      this.scene.start('game', { seed: randomSeed(), level: 1 });
-    });
+    this.cameras.main.fadeOut(250, 26, 28, 44);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('classes'));
   }
 
   /** A strip of open space for the background: desks, plants and two drones on patrol. */
