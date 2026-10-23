@@ -54,7 +54,7 @@ export class UIScene extends Phaser.Scene {
     this.itemList = this.add.text(PAD, PAD + 60, '', textStyle(10, PAL.cyan));
 
     this.add
-      .text(PAD, VIEW_H - PAD, 'WSAD move · J badge · K pen · Space search · I inventory · R new run', textStyle(10, PAL.silver))
+      .text(PAD, VIEW_H - PAD, 'WSAD move · J badge · K pen · Space search · I inventory · Esc pause', textStyle(10, PAL.silver))
       .setOrigin(0, 1);
 
     this.promptText = this.add.text(VIEW_W / 2, VIEW_H - 46, '', textStyle(12, PAL.yellow)).setOrigin(0.5);
@@ -79,7 +79,7 @@ export class UIScene extends Phaser.Scene {
     this.listen('prompt', ({ text }) => this.promptText.setText(text ?? ''));
     this.listen('boss:health', this.onBossHealth);
     this.listen('banner', ({ title, line, holdMs }) => this.showBanner(title, line, holdMs));
-    this.listen('player:died', () => this.showBanner('SURVIVOR OFFLINE', 'Glacier wins this round. New run in a moment.'));
+    this.listen('player:died', () => this.showBanner('SURVIVOR OFFLINE', 'Glacier wins this round.'));
     this.listen('game:won', ({ stats }) =>
       this.showBanner('GLACIER DEFEATED', `The network is back in human hands. Allied software runs again. ${stats.pln} PLN left, ${stats.items.length} items.`, 5200),
     );

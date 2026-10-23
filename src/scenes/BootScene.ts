@@ -14,6 +14,11 @@ export class BootScene extends Phaser.Scene {
     const num = (name: string) => (/^\d+$/.test(params.get(name) ?? '') ? Number(params.get(name)) : undefined);
     const seed = num('seed');
     const level = Phaser.Math.Clamp(num('level') ?? 1, 1, LEVELS.length);
+    // A seed or level in the URL skips the title screen (handy for testing); otherwise show the menu.
+    if (seed === undefined && !params.has('level')) {
+      this.scene.start('menu');
+      return;
+    }
     // HUD first, so it is listening before the first level is announced.
     this.scene.launch('ui');
     this.scene.start('game', { seed, level });

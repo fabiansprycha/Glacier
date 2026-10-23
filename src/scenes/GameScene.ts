@@ -17,6 +17,7 @@ import { SecurityCameras } from '../systems/SecurityCameras';
 import { Traps } from '../systems/Traps';
 import type { CaptchaData } from './CaptchaScene';
 import type { InventoryData } from './InventoryScene';
+import type { PauseData } from './PauseScene';
 import type { ShopData, ShopOffer } from './ShopScene';
 import { DIRS, buildFloorLayers, findRoomAt, generateDungeon, type Dungeon, type EnemyKind, type Room } from '../world/dungeon';
 import { rollLoot } from '../world/loot';
@@ -92,6 +93,7 @@ export class GameScene extends Phaser.Scene {
   private machines = new Map<number, Ware[]>();
   /** Secret car park: 0 before the player walks in, then the number of the current wave. */
   private secretWave = 0;
+  private overlayClosedAt = 0;
 
   constructor() {
     super('game');
@@ -158,7 +160,7 @@ export class GameScene extends Phaser.Scene {
     cam.setBackgroundColor('#1a1c2c');
     cam.roundPixels = true;
 
-    this.input.keyboard!.on('keydown-R', () => this.restartRun());
+    for (const key of ['keydown-ESC', 'keydown-P']) this.input.keyboard!.on(key, () => this.openPause());
     this.input.keyboard!.addCapture('TAB');
     for (const key of ['keydown-I', 'keydown-TAB']) this.input.keyboard!.on(key, () => this.openInventory());
 
@@ -411,7 +413,7 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.shake(120, 0.004);
     if (this.stats.hp <= 0) {
       emit(this.game, 'player:died', { level: this.level });
-      this.restartWith({ seed: randomSeed(), level: 1 }, 1600);
+      this.toMainMenu(2600);
     }
   }
 
@@ -517,7 +519,13 @@ export class GameScene extends Phaser.Scene {
   /** Coming back from the minigame or the shop: drop keys pressed meanwhile so nothing fires twice. */
   private resumeFromOverlay(): void {
     this.input.keyboard!.resetKeys();
+    this.overlayClosedAt = performance.now();
     this.scene.resume();
+  }
+
+  /** The key that closed an overlay (Esc, I) may reach this scene too; ignore it for a moment. */
+  private justClosedOverlay(): boolean {
+    return performance.now() - this.overlayClosedAt < 200;
   }
 
   /** Each machine sells one consumable and two items the player does not own yet. */
@@ -571,8 +579,26 @@ export class GameScene extends Phaser.Scene {
     this.scene.launch('shop', data);
   }
 
+  private openPause(): void {
+    if (this.transitioning || this.justClosedOverlay()) return;
+    const data: PauseData = {
+      onResume: () => this.resumeFromOverlay(),
+      onRestart: () => {
+        this.resumeFromOverlay();
+        this.restartRun();
+      },
+      onMainMenu: () => {
+        this.resumeFromOverlay();
+        this.toMainMenu();
+      },
+    };
+    this.player.halt();
+    this.scene.pause();
+    this.scene.launch('pause', data);
+  }
+
   private openInventory(): void {
-    if (this.transitioning || this.search.busy) return;
+    if (this.transitioning || this.search.busy || this.justClosedOverlay()) return;
     const data: InventoryData = { stats: this.stats, onClose: () => this.resumeFromOverlay() };
     this.player.halt();
     this.scene.pause();
@@ -605,7 +631,22 @@ export class GameScene extends Phaser.Scene {
   private winRun(): void {
     this.elevator.setAlpha(1);
     emit(this.game, 'game:won', { stats: this.stats });
-    this.restartWith({ seed: randomSeed(), level: 1 }, 6000);
+    this.toMainMenu(6000);
+  }
+
+  /** Back to the title screen; the HUD goes away with the run. */
+  private toMainMenu(delay = 0): void {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    this.player.halt();
+    this.physics.world.pause();
+    this.time.delayedCall(delay, () => {
+      this.cameras.main.fadeOut(300, 26, 28, 44);
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        this.scene.stop('ui');
+        this.scene.start('menu');
+      });
+    });
   }
 
   private restartRun(): void {

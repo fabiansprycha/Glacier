@@ -413,6 +413,8 @@ function createTileset(scene: Phaser.Scene): void {
   for (let id = 0; id < TILE_COUNT; id++) {
     ox = id * TILE;
     draw[id]();
+    // Frames named by tile id, so single tiles can also be shown as images (title screen).
+    tex.add(id, 0, ox, 0, TILE, TILE);
   }
   tex.refresh();
 }

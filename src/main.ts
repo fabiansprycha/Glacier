@@ -5,6 +5,8 @@ import { CaptchaScene } from './scenes/CaptchaScene';
 import { GameScene } from './scenes/GameScene';
 import { ShopScene } from './scenes/ShopScene';
 import { InventoryScene } from './scenes/InventoryScene';
+import { MenuScene } from './scenes/MenuScene';
+import { PauseScene } from './scenes/PauseScene';
 import { UIScene } from './scenes/UIScene';
 
 const game = new Phaser.Game({
@@ -16,7 +18,7 @@ const game = new Phaser.Game({
   backgroundColor: '#1a1c2c',
   physics: { default: 'arcade', arcade: { debug: false } },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [BootScene, GameScene, UIScene, CaptchaScene, ShopScene, InventoryScene],
+  scene: [BootScene, MenuScene, GameScene, UIScene, CaptchaScene, ShopScene, InventoryScene, PauseScene],
 });
 
 // Debug handle for the browser console and automated tests.

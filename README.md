@@ -18,7 +18,7 @@ npm run build        # production build in dist/
 npm run build:single # a single file, dist-single/index.html (easy to share or host anywhere)
 ```
 
-Controls: WSAD (or arrow keys) to move, J to swing the badge on its lanyard, K to throw a pen, Space to search desks, cabinets and computers, I (or Tab) for the inventory, R for a new run. URL parameters: `?seed=42` replays a layout, `?level=3` starts on a given level.
+Controls: WSAD (or arrow keys) to move, J to swing the badge on its lanyard, K to throw a pen, Space to search desks, cabinets and computers, I (or Tab) for the inventory, Esc (or P) to pause. The game opens on a title screen (New game, How to play); the pause menu has Resume, Restart run and Main menu. URL parameters: `?seed=42` replays a layout, `?level=3` starts on a given level (both skip the title screen).
 
 ## Stack
 
@@ -35,8 +35,8 @@ src/
   gfx/       placeholder art drawn in code (Sweetie 16 palette)
   entities/  player, drones, rogue printers, bosses (printer, security bot, swarm mother, Glacier)
   systems/   combat, searching furniture, breakables, traps, security cameras
-  scenes/    Boot (textures) → Game (gameplay) + UI (HUD, minimap), with Captcha (minigame),
-             Shop (vending machine) and Inventory as overlays
+  scenes/    Boot (textures) → Menu (title screen) → Game (gameplay) + UI (HUD, minimap), with
+             Captcha (minigame), Shop (vending machine), Inventory and Pause as overlays
 tests/       generator and loot tests over hundreds of seeds
 ```
 
@@ -65,7 +65,7 @@ Principles that keep it easy to extend:
 - **Vending machines** (2 per level): each sells one snack (protein bar +2 HP or a pack of pens) and two items you do not own yet. You pay in PLN: 1 per drone, 6 per boss, the rest from searching.
 - **Items with effects** (`core/items.ts`): four-colour pen (3 pens per throw), gel pen (pierces enemies), stapler (faster throws), pen pocket, bungee lanyard (longer swing), VIP badge (swings destroy shots), antistatic wristband (trap immunity), hoodie (cameras only see you up close), company mug (+1 HP per cleared room), ANC headphones (more time in the minigame), double espresso (faster movement), plus stat items: steel lanyard, fountain pen, coffee thermos. Each item can be owned once. Sources: vending machines, loot, Glacier's computers, the ARGUS terminal, bosses and the secret room.
 - **ARGUS terminal** (allied software) in the break room: full repair, pens up to 10, one item.
-- Health, pens, cash and items carry over between levels. Dying starts a new run.
+- Health, pens, cash and items carry over between levels. Dying (or beating Glacier) returns to the title screen.
 
 ## Next steps (suggested order)
 
