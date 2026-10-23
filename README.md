@@ -36,7 +36,7 @@ src/
   entities/  player, drones, rogue printers, bosses (printer, security bot, swarm mother, Glacier)
   systems/   combat, searching furniture, breakables, traps, security cameras
   scenes/    Boot (textures) → Menu (title screen) → Game (gameplay) + UI (HUD, minimap), with
-             Captcha (minigame), Shop (vending machine), Inventory and Pause as overlays
+             Captcha (minigame), Shop (vending machine), Inventory, Pause and Note (emails, sticky notes) as overlays
 tests/       generator and loot tests over hundreds of seeds
 ```
 
@@ -75,7 +75,7 @@ Principles that keep it easy to extend:
 - **Room events** (`systems/RoomEvents.ts`):
   - **Deadline** (about 30% of rooms with enemies): clear the room before the timer runs out for +4 PLN and +3 pens; miss it and Glacier sends 2 more drones (scope creep).
   - **Overheating** (most floors have one such room): Glacier switched the air conditioning off. Heat rises while you are in the room, and at 100% you lose 1 HP every 2.2 s until you restart the floor cooling unit (Space, works mid-fight).
-- **Emails and sticky notes** (`world/lore.ts`): about half of the ordinary computers hold an email from the people who worked here, and some desks a sticky note. Each one is shown once per run.
+- **Emails and sticky notes** (`world/lore.ts`): about half of the ordinary computers hold an email from the people who worked here, and some desks a sticky note. When you find one, a prompt appears: Space opens it in its own window (a mail client or a yellow sticky note), Space or Esc closes it. Walk away and it stays unread. Each one is shown once per run.
 - **Messages** wait their turn instead of replacing each other, and stay on screen longer the longer they are.
 - Health, pens, cash and items carry over between levels. Dying (or beating Glacier) returns to the title screen.
 

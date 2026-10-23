@@ -19,11 +19,12 @@ import { RoomEvents } from '../systems/RoomEvents';
 import { Traps } from '../systems/Traps';
 import type { CaptchaData } from './CaptchaScene';
 import type { InventoryData } from './InventoryScene';
+import type { NoteData } from './NoteScene';
 import type { PauseData } from './PauseScene';
 import type { ShopData, ShopOffer } from './ShopScene';
 import { DIRS, USB_DRIVES, buildFloorLayers, findRoomAt, generateDungeon, type Dungeon, type EnemyKind, type Room } from '../world/dungeon';
 import { rollLoot } from '../world/loot';
-import { loreFor } from '../world/lore';
+import { loreFor, type LoreNote } from '../world/lore';
 import { DOOR_POS, ROOM_CENTER } from '../world/roomLayout';
 import { SOLID_TILES, T, isWalkable } from '../world/tiles';
 
@@ -118,6 +119,8 @@ export class GameScene extends Phaser.Scene {
   /** MEOLN asked for the USB drives (on the first visit) / got them back. */
   private questGiven = false;
   private questDone = false;
+  /** An email or note just found in a searched piece of furniture, waiting for Space to open it. */
+  private pendingNote: { key: string; note: LoreNote; kind: NoteData['kind']; x: number; y: number } | null = null;
 
   constructor() {
     super('game');
@@ -141,6 +144,7 @@ export class GameScene extends Phaser.Scene {
     this.usbFound = new Set();
     this.questGiven = false;
     this.questDone = false;
+    this.pendingNote = null;
     this.physics.world.resume();
 
     const layers = buildFloorLayers(this.dungeon, T.VOID);
@@ -481,7 +485,6 @@ export class GameScene extends Phaser.Scene {
     if (this.transitioning) return;
     this.stats.hp = Math.max(0, this.stats.hp - damage);
     this.statsChanged();
-    this.cameras.main.shake(120, 0.004);
     if (this.stats.hp <= 0) {
       emit(this.game, 'player:died', { level: this.level });
       this.toMainMenu(2600);
@@ -507,6 +510,7 @@ export class GameScene extends Phaser.Scene {
   // ---------------------------------------------------------------- searching
 
   private updateInteraction(): void {
+    if (this.pendingNote && this.updatePendingNote()) return;
     const nearTerminal =
       (!this.terminalUsed || !this.questDone) &&
       this.currentRoom === this.dungeon.treasure &&
@@ -597,17 +601,45 @@ export class GameScene extends Phaser.Scene {
       const text = loot.apply(this.stats);
       this.toast(text, loot.id === 'item' ? PAL.cyan : PAL.lime);
       this.statsChanged();
-    } else if (!usb) {
+    } else if (!usb && !this.pendingNote) {
       this.toast('Nothing here.', PAL.silver);
     }
   }
 
-  /** Emails on computers and sticky notes on desks: what the last people here left behind. */
+  /**
+   * Emails on computers and sticky notes on desks: what the last people here left behind.
+   * Finding one offers it with a prompt; Space opens it. Walking away leaves it unread.
+   */
   private readLore(tile: number, tx: number, ty: number): void {
     const lore = loreFor(tile, this.dungeon.seed, tx, ty, this.stats.lore);
     if (!lore) return;
-    this.stats.lore.push(lore.key);
-    emit(this.game, 'banner', { title: lore.note.title, line: lore.note.text });
+    const kind = tile === T.DESK_PC ? 'email' : 'note';
+    this.pendingNote = { ...lore, kind, x: tx * TILE + TILE / 2, y: ty * TILE + TILE / 2 };
+  }
+
+  /** Shows the "read it" prompt while the player stays near; returns true while it owns the Space key. */
+  private updatePendingNote(): boolean {
+    const pending = this.pendingNote!;
+    const feet = this.player.feet;
+    if (Phaser.Math.Distance.Between(feet.x, feet.y, pending.x, pending.y) > 2 * TILE) {
+      this.pendingNote = null;
+      return false;
+    }
+    const prompt = pending.kind === 'email' ? '[Space] Read the email' : '[Space] Read the sticky note';
+    if (prompt !== this.lastPrompt) {
+      this.lastPrompt = prompt;
+      emit(this.game, 'prompt', { text: prompt });
+    }
+    if (!this.controls.interact) return true;
+    this.pendingNote = null;
+    this.stats.lore.push(pending.key);
+    const data: NoteData = { note: pending.note, kind: pending.kind, onClose: () => this.resumeFromOverlay() };
+    this.player.halt();
+    emit(this.game, 'prompt', { text: null });
+    this.lastPrompt = null;
+    this.scene.pause();
+    this.scene.launch('note', data);
+    return true;
   }
 
   /** A USB drive for MEOLN's side quest may be hidden in this piece of furniture. */
