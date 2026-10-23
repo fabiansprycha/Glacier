@@ -2,7 +2,7 @@ import { GRID, ROOM_H, ROOM_W } from '../core/config';
 import type { LevelDef } from '../core/levels';
 import { Rng } from '../core/rng';
 import { DOOR_POS, buildRoomTiles, floorTileFor, placeCamera, pickEnemySpawns, pickTraps, placeVending } from './roomLayout';
-import { T, isFurniture } from './tiles';
+import { T, isFurniture, isWalkable } from './tiles';
 
 export type Dir = 'n' | 's' | 'e' | 'w';
 export const DIRS: readonly Dir[] = ['n', 's', 'e', 'w'];
@@ -17,6 +17,21 @@ export const OPPOSITE: Record<Dir, Dir> = { n: 's', s: 'n', e: 'w', w: 'e' };
 export type RoomType = 'start' | 'normal' | 'treasure' | 'boss' | 'secret';
 
 export type EnemyKind = 'drone' | 'printer';
+
+/**
+ * Something that happens when the player walks into a room:
+ * - deadline: clear the room before the timer runs out for a bonus, or Glacier adds more drones;
+ * - overheat: Glacier killed the air conditioning; the room heats up until the cooling unit is restarted.
+ */
+export type RoomEvent = { kind: 'deadline'; seconds: number } | { kind: 'overheat'; unit: { x: number; y: number } };
+
+/** A USB drive with human backups, hidden in a piece of furniture; the MEOLN terminal wants all of them. */
+export interface UsbDrive {
+  roomId: number;
+  /** Room-local tile of the furniture it is hidden in. */
+  x: number;
+  y: number;
+}
 export interface EnemySpawn {
   x: number;
   y: number;
@@ -48,6 +63,7 @@ export interface Room {
   coffee: { x: number; y: number } | null;
   /** Wall side hiding the way into the secret room (a cracked wall until smashed). */
   secretDoor?: Dir;
+  event: RoomEvent | null;
 }
 
 export interface SecurityCamera {
@@ -67,6 +83,8 @@ export interface Dungeon {
   treasure: Room;
   /** Hidden underground car park, reached by smashing a cracked wall. */
   secret: Room | null;
+  /** MEOLN's side quest: USB drives hidden in furniture, each in a different room. */
+  usbDrives: UsbDrive[];
 }
 
 export interface DungeonOptions {
@@ -83,6 +101,13 @@ export interface DungeonOptions {
  */
 /** Chance that an ordinary room has an espresso machine. */
 const COFFEE_CHANCE = 0.05;
+/** Chance that a room with enemies has to be cleared against a deadline. */
+const DEADLINE_CHANCE = 0.3;
+/** Chance that a floor has one room with the air conditioning off. */
+const OVERHEAT_CHANCE = 0.7;
+export const USB_DRIVES = 3;
+/** Furniture a USB drive can be hidden in (never Glacier's or the CCTV computers). */
+const USB_HIDEOUTS: readonly number[] = [T.DESK, T.DESK_PC, T.CABINET];
 
 export function generateDungeon({ seed, level }: DungeonOptions): Dungeon {
   const rng = new Rng(seed);
@@ -125,10 +150,14 @@ export function generateDungeon({ seed, level }: DungeonOptions): Dungeon {
       if (room.type === 'normal' && !room.vending && rng.chance(COFFEE_CHANCE)) room.coffee = placeVending(room, rng, T.COFFEE_MACHINE);
     }
 
+    addRoomEvents(layout, rng);
+    const usbDrives = hideUsbDrives(layout, rng);
+    if (usbDrives.length < USB_DRIVES) continue;
+
     const secret = level.secretRoom ? addSecretRoom(layout, rng, level) : null;
     if (level.secretRoom && !secret) continue;
 
-    return { seed, level, rooms: layout, start: layout[0], boss, treasure, secret };
+    return { seed, level, rooms: layout, start: layout[0], boss, treasure, secret, usbDrives };
   }
   throw new Error(`Could not generate a dungeon for seed ${seed}`);
 }
@@ -197,8 +226,41 @@ function addSecretRoom(layout: Room[], rng: Rng, level: LevelDef): Room | null {
   return room;
 }
 
+/** Deadlines in some rooms with enemies; at most one overheating room per floor, with its cooling unit. */
+function addRoomEvents(layout: Room[], rng: Rng): void {
+  const normal = layout.filter((r) => r.type === 'normal');
+  if (rng.chance(OVERHEAT_CHANCE)) {
+    for (const room of rng.shuffle(normal.filter((r) => !r.camera && !r.vending && !r.coffee))) {
+      const unit = placeVending(room, rng, T.COOLING_UNIT);
+      if (!unit) continue;
+      room.event = { kind: 'overheat', unit };
+      break;
+    }
+  }
+  for (const room of normal) {
+    if (room.event || room.enemies.length === 0 || !rng.chance(DEADLINE_CHANCE)) continue;
+    room.event = { kind: 'deadline', seconds: 10 + 4 * room.enemies.length };
+  }
+}
+
+/** One USB drive per room, in furniture the player can stand next to. */
+function hideUsbDrives(layout: Room[], rng: Rng): UsbDrive[] {
+  const drives: UsbDrive[] = [];
+  for (const room of rng.shuffle(layout.filter((r) => r.type === 'normal' || r.type === 'start'))) {
+    if (drives.length === USB_DRIVES) break;
+    const spots: { x: number; y: number }[] = [];
+    for (let y = 1; y < ROOM_H - 1; y++)
+      for (let x = 1; x < ROOM_W - 1; x++) {
+        if (!USB_HIDEOUTS.includes(room.tiles[y][x])) continue;
+        if (DIRS.some((d) => isWalkable(room.tiles[y + DIR_VEC[d].y][x + DIR_VEC[d].x]))) spots.push({ x, y });
+      }
+    if (spots.length) drives.push({ roomId: room.id, ...rng.pick(spots) });
+  }
+  return drives;
+}
+
 function makeRoom(id: number, gx: number, gy: number, type: RoomType, depth: number): Room {
-  return { id, gx, gy, type, depth, doors: { n: false, s: false, e: false, w: false }, tiles: [], enemies: [], traps: [], camera: null, cameraPc: null, vending: null, coffee: null };
+  return { id, gx, gy, type, depth, doors: { n: false, s: false, e: false, w: false }, tiles: [], enemies: [], traps: [], camera: null, cameraPc: null, vending: null, coffee: null, event: null };
 }
 
 export function doorCount(room: Room): number {

@@ -35,6 +35,11 @@ export class UIScene extends Phaser.Scene {
   private pln!: Phaser.GameObjects.Text;
   private banner!: Phaser.GameObjects.Container;
   private toastText!: Phaser.GameObjects.Text;
+  /** Toasts wait their turn, so a new one never wipes a message before it can be read. */
+  private toastQueue: GameEvents['toast'][] = [];
+  private toastBusy = false;
+  private timerText!: Phaser.GameObjects.Text;
+  private objectiveText!: Phaser.GameObjects.Text;
   private promptText!: Phaser.GameObjects.Text;
   private bossBar!: Phaser.GameObjects.Graphics;
   private bossLabel!: Phaser.GameObjects.Text;
@@ -47,6 +52,8 @@ export class UIScene extends Phaser.Scene {
     hiDpi(this);
     // The scene is reused for every run; the old heart images were destroyed with the last one.
     this.hearts = [];
+    this.toastQueue = [];
+    this.toastBusy = false;
     this.map = this.add.graphics();
 
     // Top left: hearts, then batteries and pln.
@@ -58,6 +65,8 @@ export class UIScene extends Phaser.Scene {
     // Items live in the inventory screen (I), so the HUD only counts them and never covers the room.
     this.itemList = this.add.text(PAD, PAD + 60, '', textStyle(10, PAL.cyan));
     this.boostText = this.add.text(PAD, PAD + 74, '', textStyle(10, PAL.yellow));
+    this.objectiveText = this.add.text(PAD, PAD + 88, '', textStyle(10, PAL.lime));
+    this.timerText = this.add.text(VIEW_W / 2, PAD + 32, '', textStyle(14, PAL.yellow)).setOrigin(0.5, 0);
 
     this.add
       .text(PAD, VIEW_H - PAD, 'WSAD move · J badge · K pen · Space search · I inventory · Esc pause', textStyle(10, PAL.silver))
@@ -85,6 +94,8 @@ export class UIScene extends Phaser.Scene {
     this.listen('prompt', ({ text }) => this.promptText.setText(text ?? ''));
     this.listen('boss:health', this.onBossHealth);
     this.listen('boost', ({ secondsLeft }) => this.boostText.setText(secondsLeft ? `CAFFEINE ${secondsLeft}s` : ''));
+    this.listen('timer', ({ text, color: fill }) => this.timerText.setText(text ?? '').setColor(fill ?? PAL.yellow));
+    this.listen('objective', ({ text }) => this.objectiveText.setText(text ?? ''));
     this.listen('banner', ({ title, line, holdMs }) => this.showBanner(title, line, holdMs));
     this.listen('player:died', () => this.showBanner('SURVIVOR OFFLINE', 'Glacier wins this round.'));
     this.listen('game:won', ({ stats }) =>
@@ -118,10 +129,27 @@ export class UIScene extends Phaser.Scene {
     this.itemList.setText(stats.items.length ? `Items: ${stats.items.length} [I]` : '');
   }
 
-  private onToast({ text, color: fill }: GameEvents['toast']): void {
+  private onToast(toast: GameEvents['toast']): void {
+    // A burst of messages queues up; once a few are waiting, each one gets a shorter turn.
+    if (this.toastQueue.length >= 4) this.toastQueue.shift();
+    this.toastQueue.push(toast);
+    if (!this.toastBusy) this.nextToast();
+  }
+
+  private nextToast(): void {
+    const toast = this.toastQueue.shift();
     this.tweens.killTweensOf(this.toastText);
-    this.toastText.setText(text).setColor(fill ?? PAL.white).setAlpha(1);
-    this.tweens.add({ targets: this.toastText, alpha: 0, delay: 1800, duration: 500 });
+    if (!toast) {
+      this.toastBusy = false;
+      this.tweens.add({ targets: this.toastText, alpha: 0, duration: 500 });
+      return;
+    }
+    this.toastBusy = true;
+    this.toastText.setText(toast.text).setColor(toast.color ?? PAL.white).setAlpha(1);
+    // Long enough to read: a base time plus a bit per character, less when others are waiting.
+    const readMs = Math.min(6000, 1600 + toast.text.length * 45);
+    const hold = this.toastQueue.length > 0 ? Math.max(1300, readMs * 0.6) : readMs;
+    this.time.delayedCall(hold, () => this.nextToast());
   }
 
   private onBossHealth({ name, hp, max, visible }: GameEvents['boss:health']): void {
@@ -136,7 +164,7 @@ export class UIScene extends Phaser.Scene {
     this.bossBar.fillStyle(color(PAL.cyan), 1).fillRect(x, y, Math.max(0, (w * hp) / max), 6);
   }
 
-  private showBanner(title: string, line: string, holdMs = 2600): void {
+  private showBanner(title: string, line: string, holdMs = Math.max(2600, 1000 + line.length * 50)): void {
     const [t, l] = this.banner.list as Phaser.GameObjects.Text[];
     t.setText(title);
     l.setText(line);

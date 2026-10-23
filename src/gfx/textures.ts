@@ -405,6 +405,21 @@ function createTileset(scene: Phaser.Scene): void {
       px(11, 3, PAL.grey);
       px(9, 3, PAL.grey);
     },
+    [T.COOLING_UNIT]: () => {
+      // Floor air conditioner, dead: grey grille, red warning light, frost-blue vents gone dark.
+      box(1, 2, 14, 14, PAL.black);
+      box(2, 3, 12, 12, PAL.silver);
+      box(3, 4, 10, 2, PAL.grey);
+      px(11, 4, PAL.red);
+      for (let y = 7; y < 14; y += 2) box(3, y, 10, 1, PAL.slate);
+      box(2, 15, 12, 1, PAL.grey);
+    },
+    [T.COOLING_UNIT_ON]: () => {
+      draw[T.COOLING_UNIT]();
+      px(11, 4, PAL.lime);
+      for (let y = 7; y < 14; y += 2) box(3, y, 10, 1, PAL.sky);
+      [[4, 1], [8, 0], [12, 1]].forEach(([x, y]) => px(x, y, PAL.cyan)); // cold air
+    },
     [T.DESK_PC_OFF]: () => {
       draw[T.DESK_PC]();
       box(4, 2, 8, 5, PAL.black);

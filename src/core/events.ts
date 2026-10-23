@@ -20,6 +20,10 @@ export interface GameEvents {
   banner: { title: string; line: string; holdMs?: number };
   /** Seconds left on the caffeine boost; null when it is over. */
   boost: { secondsLeft: number | null };
+  /** Room event countdown or heat (see systems/RoomEvents.ts); null hides it. */
+  timer: { text: string | null; color?: string };
+  /** Side quest progress under the level line; null hides it. */
+  objective: { text: string | null };
   'boss:health': { name: string; hp: number; max: number; visible: boolean };
   'player:died': { level: number };
   /** Glacier is down: the run is won. */

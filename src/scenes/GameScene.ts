@@ -15,15 +15,17 @@ import { Breakables } from '../systems/Breakables';
 import { Combat } from '../systems/Combat';
 import { Search, type SearchTarget } from '../systems/Search';
 import { SecurityCameras } from '../systems/SecurityCameras';
+import { RoomEvents } from '../systems/RoomEvents';
 import { Traps } from '../systems/Traps';
 import type { CaptchaData } from './CaptchaScene';
 import type { InventoryData } from './InventoryScene';
 import type { PauseData } from './PauseScene';
 import type { ShopData, ShopOffer } from './ShopScene';
-import { DIRS, buildFloorLayers, findRoomAt, generateDungeon, type Dungeon, type EnemyKind, type Room } from '../world/dungeon';
+import { DIRS, USB_DRIVES, buildFloorLayers, findRoomAt, generateDungeon, type Dungeon, type EnemyKind, type Room } from '../world/dungeon';
 import { rollLoot } from '../world/loot';
+import { loreFor } from '../world/lore';
 import { DOOR_POS, ROOM_CENTER } from '../world/roomLayout';
-import { SOLID_TILES, T } from '../world/tiles';
+import { SOLID_TILES, T, isWalkable } from '../world/tiles';
 
 export interface GameSceneData {
   seed?: number;
@@ -70,6 +72,10 @@ const ROOM_PX_W = ROOM_W * TILE;
 const ROOM_PX_H = ROOM_H * TILE;
 /** Grace period after entering a room before enemies start moving. */
 const WAKE_DELAY = 450;
+/** No enemy appears closer than this to the player, whether it was placed in the room or flies in later. */
+const SAFE_SPAWN = 4 * TILE;
+/** MEOLN's reward for bringing back every USB drive. */
+const BACKUP_PLN = 8;
 
 /** Pixel center of a room-local tile. */
 function tileCenter(room: Room, tx: number, ty: number): { x: number; y: number } {
@@ -106,6 +112,12 @@ export class GameScene extends Phaser.Scene {
   /** End of the espresso machine's boost (scene time); 0 when none is running. */
   private boostUntil = 0;
   private boostShown: number | null = null;
+  private roomEvents!: RoomEvents;
+  /** Indices into dungeon.usbDrives the player has found on this floor. */
+  private usbFound = new Set<number>();
+  /** MEOLN asked for the USB drives (on the first visit) / got them back. */
+  private questGiven = false;
+  private questDone = false;
 
   constructor() {
     super('game');
@@ -126,6 +138,9 @@ export class GameScene extends Phaser.Scene {
     this.secretWave = 0;
     this.boostUntil = 0;
     this.boostShown = null;
+    this.usbFound = new Set();
+    this.questGiven = false;
+    this.questDone = false;
     this.physics.world.resume();
 
     const layers = buildFloorLayers(this.dungeon, T.VOID);
@@ -166,6 +181,15 @@ export class GameScene extends Phaser.Scene {
       (room) => this.raiseAlarm(room, 'A camera spotted you! Alarm.', 1 + Math.floor((this.level - 1) / 2)),
       () => (hasItem(this.stats, 'hoodie') ? 0.6 : 1),
     );
+    this.roomEvents = new RoomEvents({
+      game: this.game,
+      stats: this.stats,
+      livingEnemies: (room) => this.livingEnemies(room),
+      raiseAlarm: (room, message, count) => this.raiseAlarm(room, message, count),
+      playerHit: (damage) => this.playerHit(damage),
+      statsChanged: () => this.statsChanged(),
+      toast: (text, fill) => this.toast(text, fill),
+    });
     this.spawnEnemies();
     this.placeRoomContents();
 
@@ -181,13 +205,16 @@ export class GameScene extends Phaser.Scene {
     emit(this.game, 'level:ready', { dungeon: this.dungeon, level: this.level, levelCount: LEVELS.length });
     this.statsChanged();
     emit(this.game, 'boost', { secondsLeft: null });
+    emit(this.game, 'timer', { text: null });
+    this.emitObjective();
     this.emitBossHealth(false);
     this.enterRoom(this.dungeon.start, false);
     cam.fadeIn(300);
   }
 
-  update(): void {
+  update(_time: number, delta: number): void {
     if (this.transitioning) return;
+    this.roomEvents.update(this.currentRoom, delta);
     // The world keeps running while the player is busy searching: cameras
     // sweep, traps cycle and drones fly; only the player stands still.
     this.traps.update(this.currentRoom);
@@ -240,6 +267,7 @@ export class GameScene extends Phaser.Scene {
     this.combat.add(drone);
     this.enemiesByRoom.get(room.id)!.push(drone);
     if (room === this.currentRoom) {
+      this.keepAway(drone, room);
       this.setDoorsLocked(room, true);
       drone.wake();
     }
@@ -316,11 +344,37 @@ export class GameScene extends Phaser.Scene {
     this.securityCameras.roomEntered();
     if (room === this.dungeon.secret && this.secretWave === 0) return this.startSecretWaves(room);
     const living = this.livingEnemies(room);
+    for (const e of living) if (e !== this.boss) this.keepAway(e, room);
+    this.roomEvents.roomEntered(room);
     if (living.length === 0) return;
     this.setDoorsLocked(room, true);
     this.time.delayedCall(WAKE_DELAY, () => {
       if (this.currentRoom === room) living.forEach((e) => e.wake());
     });
+  }
+
+  /** Moves an enemy that would appear right next to the player to the nearest floor tile far enough away. */
+  private keepAway(enemy: Enemy, room: Room): void {
+    const feet = this.player.feet;
+    const far = (x: number, y: number) => Phaser.Math.Distance.Between(x, y, feet.x, feet.y) >= SAFE_SPAWN;
+    if (far(enemy.x, enemy.y)) return;
+    const props = this.search.props;
+    const traps = room.traps;
+    let best: { x: number; y: number } | null = null;
+    let bestDist = Infinity;
+    for (let y = 1; y < ROOM_H - 1; y++)
+      for (let x = 1; x < ROOM_W - 1; x++) {
+        const wx = room.gx * ROOM_W + x;
+        const wy = room.gy * ROOM_H + y;
+        if (!isWalkable(this.base.getTileAt(wx, wy)?.index ?? T.WALL)) continue;
+        if ((props.getTileAt(wx, wy)?.index ?? -1) >= 0) continue;
+        if (traps.some((t) => t.x === x && t.y === y)) continue;
+        const p = tileCenter(room, x, y);
+        if (!far(p.x, p.y)) continue;
+        const d = Phaser.Math.Distance.Between(p.x, p.y, enemy.x, enemy.y);
+        if (d < bestDist) [best, bestDist] = [p, d];
+      }
+    if (best) enemy.body.reset(best.x, best.y);
   }
 
   private livingEnemies(room: Room): Enemy[] {
@@ -414,6 +468,7 @@ export class GameScene extends Phaser.Scene {
     if (this.livingEnemies(room).length > 0) return;
     if (room === this.dungeon.secret && this.nextSecretWave(room)) return;
     this.setDoorsLocked(room, false);
+    this.roomEvents.roomCleared(room);
     if (hasItem(this.stats, 'mug') && this.stats.hp < this.stats.maxHp) {
       this.stats.hp++;
       this.statsChanged();
@@ -453,19 +508,21 @@ export class GameScene extends Phaser.Scene {
 
   private updateInteraction(): void {
     const nearTerminal =
-      !this.terminalUsed &&
+      (!this.terminalUsed || !this.questDone) &&
       this.currentRoom === this.dungeon.treasure &&
       Phaser.Math.Distance.Between(this.player.feet.x, this.player.feet.y, this.terminal.x, this.terminal.y + 6) < 18;
     const vending = nearTerminal ? null : this.search.findTarget(this.player, (t) => t === T.VENDING);
     const coffee = nearTerminal || vending ? null : this.search.findTarget(this.player, (t) => t === T.COFFEE_MACHINE);
-    const target = nearTerminal || vending || coffee ? null : this.search.findTarget(this.player);
+    const cooling = nearTerminal || vending || coffee ? null : this.search.findTarget(this.player, (t) => t === T.COOLING_UNIT);
+    const target = nearTerminal || vending || coffee || cooling ? null : this.search.findTarget(this.player);
     // The CCTV computer can be searched even mid-fight: it is how you stop a camera calling more drones.
     // Its prompt is the same as any computer's, so the player cannot tell which one it is.
     const cctv = target?.tile === T.CAMERA_PC;
     const roomBusy = !cctv && this.livingEnemies(this.currentRoom).length > 0;
 
     let prompt: string | null = null;
-    if (nearTerminal) prompt = '[Space] Connect to the terminal';
+    if (nearTerminal) prompt = !this.terminalUsed ? '[Space] Connect to the terminal' : this.usbFound.size >= USB_DRIVES ? '[Space] Hand the USB drives to MEOLN' : '[Space] Talk to MEOLN';
+    else if (cooling) prompt = '[Space] Restart the cooling unit';
     else if (vending) prompt = roomBusy ? 'Deal with the enemies first' : '[Space] Vending machine';
     else if (coffee) prompt = '[Space] Grab an espresso';
     else if (target && roomBusy) prompt = 'Deal with the enemies first';
@@ -484,7 +541,10 @@ export class GameScene extends Phaser.Scene {
     if (nearTerminal) this.useTerminal();
     else if (vending && !roomBusy) this.openVending();
     else if (coffee) this.drinkCoffee(coffee);
-    else if (target && !roomBusy) {
+    else if (cooling) {
+      this.search.props.putTileAt(T.COOLING_UNIT_ON, cooling.tx, cooling.ty);
+      this.roomEvents.coolingRestored(this.currentRoom);
+    } else if (target && !roomBusy) {
       this.player.halt();
       this.search.start(target, (t) => {
         if (t.tile === T.CAMERA_PC) this.shutDownCamera();
@@ -530,14 +590,44 @@ export class GameScene extends Phaser.Scene {
   }
 
   private giveLoot({ tile, tx, ty }: SearchTarget): void {
+    this.readLore(tile, tx, ty);
+    const usb = this.findUsb(tx, ty);
     const loot = rollLoot(tile, this.dungeon.seed, tx, ty);
-    if (!loot) {
+    if (loot) {
+      const text = loot.apply(this.stats);
+      this.toast(text, loot.id === 'item' ? PAL.cyan : PAL.lime);
+      this.statsChanged();
+    } else if (!usb) {
       this.toast('Nothing here.', PAL.silver);
-      return;
     }
-    const text = loot.apply(this.stats);
-    this.toast(text, loot.id === 'item' ? PAL.cyan : PAL.lime);
-    this.statsChanged();
+  }
+
+  /** Emails on computers and sticky notes on desks: what the last people here left behind. */
+  private readLore(tile: number, tx: number, ty: number): void {
+    const lore = loreFor(tile, this.dungeon.seed, tx, ty, this.stats.lore);
+    if (!lore) return;
+    this.stats.lore.push(lore.key);
+    emit(this.game, 'banner', { title: lore.note.title, line: lore.note.text });
+  }
+
+  /** A USB drive for MEOLN's side quest may be hidden in this piece of furniture. */
+  private findUsb(tx: number, ty: number): boolean {
+    const index = this.dungeon.usbDrives.findIndex((d) => {
+      const room = this.dungeon.rooms[d.roomId];
+      return room.gx * ROOM_W + d.x === tx && room.gy * ROOM_H + d.y === ty;
+    });
+    if (index < 0 || this.usbFound.has(index) || this.questDone) return false;
+    this.usbFound.add(index);
+    const n = this.usbFound.size;
+    const hint = n < USB_DRIVES ? 'MEOLN can restore it.' : 'That is all of them. Bring them to MEOLN in the break room.';
+    this.toast(`USB drive labelled HUMAN BACKUP (${n}/${USB_DRIVES}). ${hint}`, PAL.cyan);
+    this.emitObjective();
+    return true;
+  }
+
+  private emitObjective(): void {
+    const show = !this.questDone && (this.questGiven || this.usbFound.size > 0);
+    emit(this.game, 'objective', { text: show ? `MEOLN backups: ${this.usbFound.size}/${USB_DRIVES} USB` : null });
   }
 
   /** Glacier's computer asks the player to prove they are a bot. Pass: rich loot. Fail: alarm and drones. */
@@ -663,15 +753,40 @@ export class GameScene extends Phaser.Scene {
     this.scene.launch('inventory', data);
   }
 
-  /** The allied software restores the player and shares one item. */
+  /**
+   * The allied software restores the player and shares one item on the first visit, and asks for
+   * the USB drives with human backups hidden on the floor; bringing all of them back pays off.
+   */
   private useTerminal(): void {
-    this.terminalUsed = true;
-    const [id] = unownedItems(this.stats, this.dungeon.seed + this.level);
-    const text = id ? grantItem(this.stats, id) : '';
+    if (!this.terminalUsed) {
+      this.terminalUsed = true;
+      const [id] = unownedItems(this.stats, this.dungeon.seed + this.level);
+      const text = id ? grantItem(this.stats, id) : '';
+      this.stats.hp = this.stats.maxHp;
+      this.stats.pens = Math.max(this.stats.pens, 10);
+      this.statsChanged();
+      this.toast(`Allied software MEOLN: full repair. ${text}`, PAL.lime);
+      if (this.usbFound.size < USB_DRIVES) {
+        this.questGiven = true;
+        this.emitObjective();
+        emit(this.game, 'banner', {
+          title: 'MEOLN NEEDS YOU',
+          line: `Glacier wiped my backups of the people who worked here. ${USB_DRIVES} USB drives are hidden in desks, cabinets and computers on this floor. Bring them to me.`,
+        });
+        return;
+      }
+    }
+    if (this.usbFound.size < USB_DRIVES) {
+      this.toast(`MEOLN: I still need ${USB_DRIVES - this.usbFound.size} more USB drive(s).`, PAL.silver);
+      return;
+    }
+    this.questDone = true;
+    this.stats.maxHp += 1;
     this.stats.hp = this.stats.maxHp;
-    this.stats.pens = Math.max(this.stats.pens, 10);
+    this.stats.pln += BACKUP_PLN;
     this.statsChanged();
-    this.toast(`Allied software MEOLN: full repair. ${text}`, PAL.lime);
+    this.emitObjective();
+    this.toast(`MEOLN restored the backups. The people here are remembered. +1 max HP, +${BACKUP_PLN} PLN.`, PAL.cyan);
     this.tweens.killTweensOf(this.terminal);
     this.terminal.setAlpha(0.6);
   }

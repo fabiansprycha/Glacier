@@ -60,7 +60,7 @@ Principles that keep it easy to extend:
 - **Bosses**: the Network printer (fans and rings of paper), the Security bot (telegraphs a charge and rams into the wall), the Swarm mother (keeps its distance and launches drones) and finally **Glacier** (ice shards, calls drones in its last third of health). Beating Glacier wins the run.
 - **Boss balance**: bosses have 45 / 60 / 70 health (Glacier 110) and take at most one pen every 0.22 s, so a fan of pens from the four-colour pen does not melt them in a second.
 - **Combat**: the badge on a lanyard (an arc swing with knockback) and thrown pens (one pen per throw, pens are ammo). Drones and shots fly over furniture.
-- **Enemies**: drones that chase you, and rogue printers (30–40% of room enemies) that stand still and shoot a sheet of paper at you every 2 seconds. Entering a room with enemies shuts its doors with shutters until they are gone.
+- **Enemies**: drones that chase you, and rogue printers (30–40% of room enemies) that stand still and shoot a sheet of paper at you every 2 seconds. Entering a room with enemies shuts its doors with shutters until they are gone. No enemy ever appears within 4 tiles of the player: room enemies, alarm reinforcements and car park waves that would spawn too close are moved to the nearest safe floor tile.
 - **Traps**: floor plates with a torn cable. Cycle: idle, sparks (warning), current (damage).
 - **Security cameras** in some rooms without enemies: they sweep and show a yellow vision cone. Stepping into it raises the alarm, the doors shut and drones fly in (more on higher levels). The camera keeps watching after an alarm (its cone turns red) and can call more drones 5 seconds later. The only way to stop it is the room's CCTV computer. It looks like every other computer, so you have to find it by searching, but it always stands somewhere the camera can never see. Cameras keep sweeping while you search.
 - **Searching** (Space) desks (mostly pens), cabinets (first aid, cash) and computers (cash). Only once the room has no enemies.
@@ -71,7 +71,12 @@ Principles that keep it easy to extend:
 - **Vending machines** (2 per level): each sells one snack (protein bar +2 HP or a pack of pens) and two items you do not own yet. You pay in PLN: 1 per drone, 6 per boss, the rest from searching.
 - **Items with effects** (`core/items.ts`): four-colour pen (3 pens per throw), gel pen (pierces enemies), stapler (faster throws), pen pocket, bungee lanyard (longer swing), VIP badge (swings destroy shots), antistatic wristband (trap immunity), hoodie (cameras only see you up close), company mug (+1 HP per cleared room), ANC headphones (more time in the minigame), double espresso (faster movement), plus stat items: steel lanyard, fountain pen, coffee thermos. Each item can be owned once. Sources: vending machines, loot, Glacier's computers, the MEOLN terminal, bosses and the secret room.
 - **Espresso machines**: very rare (about 1 in 20 ordinary rooms). The first machine you use also gives the Double espresso item (it comes from nowhere else). One espresso per machine gives 12 seconds of faster movement (+35%) and faster attacks (+60%); it works mid-fight.
-- **MEOLN terminal** (allied software) in the break room: full repair, pens up to 10, one item.
+- **MEOLN terminal** (allied software) in the break room: full repair, pens up to 10, one item. It also asks for **3 USB drives with human backups** hidden in desks, cabinets and computers around the floor (one per room, progress on the HUD); bringing them all back gives +1 max HP and 8 PLN.
+- **Room events** (`systems/RoomEvents.ts`):
+  - **Deadline** (about 30% of rooms with enemies): clear the room before the timer runs out for +4 PLN and +3 pens; miss it and Glacier sends 2 more drones (scope creep).
+  - **Overheating** (most floors have one such room): Glacier switched the air conditioning off. Heat rises while you are in the room, and at 100% you lose 1 HP every 2.2 s until you restart the floor cooling unit (Space, works mid-fight).
+- **Emails and sticky notes** (`world/lore.ts`): about half of the ordinary computers hold an email from the people who worked here, and some desks a sticky note. Each one is shown once per run.
+- **Messages** wait their turn instead of replacing each other, and stay on screen longer the longer they are.
 - Health, pens, cash and items carry over between levels. Dying (or beating Glacier) returns to the title screen.
 
 ## Next steps (suggested order)

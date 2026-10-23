@@ -7,6 +7,7 @@ import { cameraCanSeeTile } from '../src/world/cameraVision';
 import { BOSSES, CAMERA, DRONE, ELEVATOR, FX, GLACIER, HERO_FRAMES, ICONS, TERMINAL } from '../src/gfx/sprites';
 import { isBreakable, isWalkable } from '../src/world/tiles';
 import { T } from '../src/world/tiles';
+import { EMAILS, STICKY_NOTES, loreFor } from '../src/world/lore';
 
 const seeds = Array.from({ length: 300 }, (_, i) => i * 7919 + 1);
 
@@ -177,5 +178,63 @@ describe('sprites', () => {
       expect(rows).toHaveLength(16);
       rows.forEach((row) => expect(row).toHaveLength(16));
     }
+  });
+});
+
+describe('room events and side quests', () => {
+  it('give deadlines to rooms with enemies and at most one overheating room with its cooling unit', () => {
+    let deadlines = 0;
+    let overheats = 0;
+    for (const seed of seeds) {
+      for (const level of LEVELS) {
+        const d = generateDungeon({ seed, level });
+        const hot = d.rooms.filter((r) => r.event?.kind === 'overheat');
+        expect(hot.length).toBeLessThanOrEqual(1);
+        for (const room of d.rooms) {
+          if (!room.event) continue;
+          expect(room.type).toBe('normal');
+          if (room.event.kind === 'deadline') {
+            deadlines++;
+            expect(room.enemies.length).toBeGreaterThan(0);
+            expect(room.event.seconds).toBeGreaterThanOrEqual(14);
+          } else {
+            overheats++;
+            expect(room.tiles[room.event.unit.y][room.event.unit.x]).toBe(T.COOLING_UNIT);
+            expect(isFullyConnected(room.tiles, true)).toBe(true);
+          }
+        }
+      }
+    }
+    expect(deadlines).toBeGreaterThan(seeds.length);
+    expect(overheats).toBeGreaterThan(seeds.length * 2);
+  });
+
+  it('hide the USB drives for MEOLN in reachable furniture, one per room', () => {
+    for (const seed of seeds) {
+      const d = generateDungeon({ seed, level: LEVELS[0] });
+      expect(d.usbDrives).toHaveLength(3);
+      expect(new Set(d.usbDrives.map((u) => u.roomId)).size).toBe(3);
+      for (const { roomId, x, y } of d.usbDrives) {
+        const room = d.rooms[roomId];
+        expect(room.id).toBe(roomId);
+        expect([T.DESK, T.DESK_PC, T.CABINET]).toContain(room.tiles[y][x]);
+        expect(DIRS.some((dir) => isWalkable(room.tiles[y + DIR_VEC[dir].y][x + DIR_VEC[dir].x]))).toBe(true);
+      }
+    }
+  });
+});
+
+describe('lore', () => {
+  it('never shows the same note twice and only lives in computers and desks', () => {
+    const seen: string[] = [];
+    for (let i = 0; i < 400; i++) {
+      const tile = i % 2 ? T.DESK_PC : T.DESK;
+      const lore = loreFor(tile, 99, i, i * 3, seen);
+      if (!lore) continue;
+      expect(seen).not.toContain(lore.key);
+      seen.push(lore.key);
+    }
+    expect(seen.length).toBe(EMAILS.length + STICKY_NOTES.length);
+    expect(loreFor(T.CABINET, 99, 1, 1, [])).toBeNull();
   });
 });

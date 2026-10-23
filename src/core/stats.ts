@@ -15,10 +15,12 @@ export interface PlayerStats {
   /** Ids of owned items (see core/items.ts). */
   items: ItemId[];
   heroClass: HeroClass;
+  /** Emails and notes already read this run (see world/lore.ts), so none repeats. */
+  lore: string[];
 }
 
 export function newPlayerStats(heroClass: HeroClass = 'dev'): PlayerStats {
-  const stats: PlayerStats = { hp: 6, maxHp: 6, pens: 10, maxPens: 30, pln: 0, meleeDamage: 2, rangedDamage: 1, items: [], heroClass };
+  const stats: PlayerStats = { hp: 6, maxHp: 6, pens: 10, maxPens: 30, pln: 0, meleeDamage: 2, rangedDamage: 1, items: [], heroClass, lore: [] };
   CLASSES[heroClass].start(stats);
   return stats;
 }

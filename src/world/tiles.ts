@@ -32,14 +32,16 @@ export const T = {
   CAMERA_PC: 29, // CCTV control computer: shuts the room's security camera down
   COFFEE_MACHINE: 30, // rare espresso machine: a short caffeine boost
   COFFEE_MACHINE_EMPTY: 31, // already used
+  COOLING_UNIT: 32, // floor air conditioner, switched off by Glacier: the room overheats until it is restarted
+  COOLING_UNIT_ON: 33, // running again
 } as const;
 
 export type TileId = (typeof T)[keyof typeof T];
 
-export const TILE_COUNT = 32;
+export const TILE_COUNT = 34;
 
 export const SOLID_TILES: readonly TileId[] = [
-  T.WALL, T.WINDOW, T.WALL_CRACKED, T.WALL_SIGN, T.PILLAR, T.CAR_TOP, T.CAR_BOTTOM, T.CAMERA_PC, T.COFFEE_MACHINE, T.COFFEE_MACHINE_EMPTY, T.DESK, T.DESK_PC, T.CABINET, T.PLANT, T.SERVER, T.VOID,
+  T.WALL, T.WINDOW, T.WALL_CRACKED, T.WALL_SIGN, T.PILLAR, T.CAR_TOP, T.CAR_BOTTOM, T.CAMERA_PC, T.COFFEE_MACHINE, T.COFFEE_MACHINE_EMPTY, T.COOLING_UNIT, T.COOLING_UNIT_ON, T.DESK, T.DESK_PC, T.CABINET, T.PLANT, T.SERVER, T.VOID,
   T.CABINET_OPEN, T.DESK_PC_OFF, T.DOOR_LOCKED, T.DESK_BARE, T.DESK_PC_GLACIER, T.VENDING,
   T.FLOWERS, T.BOXES, T.CHAIR,
 ];
@@ -48,7 +50,7 @@ export const SOLID_TILES: readonly TileId[] = [
 export const FURNITURE_TILES: readonly TileId[] = [
   T.DESK, T.DESK_PC, T.CABINET, T.PLANT, T.SERVER, T.CABINET_OPEN, T.DESK_PC_OFF, T.DESK_BARE, T.DESK_PC_GLACIER, T.VENDING,
   T.FLOWERS, T.BOXES, T.CHAIR, T.PILLAR, T.CAR_TOP, T.CAR_BOTTOM, T.CAMERA_PC,
-  T.COFFEE_MACHINE, T.COFFEE_MACHINE_EMPTY,
+  T.COFFEE_MACHINE, T.COFFEE_MACHINE_EMPTY, T.COOLING_UNIT, T.COOLING_UNIT_ON,
 ];
 
 /** Furniture the player can search, and what it turns into afterwards. */
