@@ -63,8 +63,9 @@ Principles that keep it easy to extend:
 - **Secret underground car park** (level 1): behind a cracked wall in one of the rooms. Smash the wall, walk in, survive 3 waves of enemies; the reward is 10 PLN and an item.
 - **Inventory** (I / Tab): stats and the list of items with descriptions. The HUD only shows a counter, so nothing covers the game.
 - **Vending machines** (2 per level): each sells one snack (protein bar +2 HP or a pack of pens) and two items you do not own yet. You pay in PLN: 1 per drone, 6 per boss, the rest from searching.
-- **Items with effects** (`core/items.ts`): four-colour pen (3 pens per throw), gel pen (pierces enemies), stapler (faster throws), pen pocket, bungee lanyard (longer swing), VIP badge (swings destroy shots), antistatic wristband (trap immunity), hoodie (cameras only see you up close), company mug (+1 HP per cleared room), ANC headphones (more time in the minigame), double espresso (faster movement), plus stat items: steel lanyard, fountain pen, coffee thermos. Each item can be owned once. Sources: vending machines, loot, Glacier's computers, the ARGUS terminal, bosses and the secret room.
-- **ARGUS terminal** (allied software) in the break room: full repair, pens up to 10, one item.
+- **Items with effects** (`core/items.ts`): four-colour pen (3 pens per throw), gel pen (pierces enemies), stapler (faster throws), pen pocket, bungee lanyard (longer swing), VIP badge (swings destroy shots), antistatic wristband (trap immunity), hoodie (cameras only see you up close), company mug (+1 HP per cleared room), ANC headphones (more time in the minigame), double espresso (faster movement), plus stat items: steel lanyard, fountain pen, coffee thermos. Each item can be owned once. Sources: vending machines, loot, Glacier's computers, the MEOLN terminal, bosses and the secret room.
+- **Espresso machines**: very rare (about 1 in 20 ordinary rooms). One espresso per machine gives 12 seconds of faster movement (+35%) and faster attacks (+60%); it works mid-fight.
+- **MEOLN terminal** (allied software) in the break room: full repair, pens up to 10, one item.
 - Health, pens, cash and items carry over between levels. Dying (or beating Glacier) returns to the title screen.
 
 ## Next steps (suggested order)

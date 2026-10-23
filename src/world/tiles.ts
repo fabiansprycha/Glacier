@@ -30,14 +30,16 @@ export const T = {
   WALL_CRACKED: 27, // cracked wall hiding the secret room: smash it to open a door
   WALL_SIGN: 28, // wall with a parking sign
   CAMERA_PC: 29, // CCTV control computer: shuts the room's security camera down
+  COFFEE_MACHINE: 30, // rare espresso machine: a short caffeine boost
+  COFFEE_MACHINE_EMPTY: 31, // already used
 } as const;
 
 export type TileId = (typeof T)[keyof typeof T];
 
-export const TILE_COUNT = 30;
+export const TILE_COUNT = 32;
 
 export const SOLID_TILES: readonly TileId[] = [
-  T.WALL, T.WINDOW, T.WALL_CRACKED, T.WALL_SIGN, T.PILLAR, T.CAR_TOP, T.CAR_BOTTOM, T.CAMERA_PC, T.DESK, T.DESK_PC, T.CABINET, T.PLANT, T.SERVER, T.VOID,
+  T.WALL, T.WINDOW, T.WALL_CRACKED, T.WALL_SIGN, T.PILLAR, T.CAR_TOP, T.CAR_BOTTOM, T.CAMERA_PC, T.COFFEE_MACHINE, T.COFFEE_MACHINE_EMPTY, T.DESK, T.DESK_PC, T.CABINET, T.PLANT, T.SERVER, T.VOID,
   T.CABINET_OPEN, T.DESK_PC_OFF, T.DOOR_LOCKED, T.DESK_BARE, T.DESK_PC_GLACIER, T.VENDING,
   T.FLOWERS, T.BOXES, T.CHAIR,
 ];
@@ -46,6 +48,7 @@ export const SOLID_TILES: readonly TileId[] = [
 export const FURNITURE_TILES: readonly TileId[] = [
   T.DESK, T.DESK_PC, T.CABINET, T.PLANT, T.SERVER, T.CABINET_OPEN, T.DESK_PC_OFF, T.DESK_BARE, T.DESK_PC_GLACIER, T.VENDING,
   T.FLOWERS, T.BOXES, T.CHAIR, T.PILLAR, T.CAR_TOP, T.CAR_BOTTOM, T.CAMERA_PC,
+  T.COFFEE_MACHINE, T.COFFEE_MACHINE_EMPTY,
 ];
 
 /** Furniture the player can search, and what it turns into afterwards. */

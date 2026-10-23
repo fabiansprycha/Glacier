@@ -18,6 +18,8 @@ export interface GameEvents {
   prompt: { text: string | null };
   /** Big centered title with a line of text (level start, secret room...). */
   banner: { title: string; line: string; holdMs?: number };
+  /** Seconds left on the caffeine boost; null when it is over. */
+  boost: { secondsLeft: number | null };
   'boss:health': { name: string; hp: number; max: number; visible: boolean };
   'player:died': { level: number };
   /** Glacier is down: the run is won. */

@@ -20,7 +20,7 @@ export class Search {
 
   constructor(
     private readonly scene: Phaser.Scene,
-    private readonly props: Phaser.Tilemaps.TilemapLayer,
+    readonly props: Phaser.Tilemaps.TilemapLayer,
   ) {
     this.bar = scene.add.graphics().setDepth(20000);
   }

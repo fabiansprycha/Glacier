@@ -44,6 +44,8 @@ export interface Room {
   cameraPc: { x: number; y: number } | null;
   /** Vending machine tile, if the room has one. */
   vending: { x: number; y: number } | null;
+  /** Rare espresso machine tile, if the room has one. */
+  coffee: { x: number; y: number } | null;
   /** Wall side hiding the way into the secret room (a cracked wall until smashed). */
   secretDoor?: Dir;
 }
@@ -79,6 +81,9 @@ export interface DungeonOptions {
  * so every adjacency is a door and the layout never forms blobs.
  * The farthest dead end becomes the boss room, another dead end the treasure room.
  */
+/** Chance that an ordinary room has an espresso machine. */
+const COFFEE_CHANCE = 0.05;
+
 export function generateDungeon({ seed, level }: DungeonOptions): Dungeon {
   const rng = new Rng(seed);
   const roomCount = level.roomCount;
@@ -114,6 +119,10 @@ export function generateDungeon({ seed, level }: DungeonOptions): Dungeon {
       if (machines === 2) break;
       room.vending = placeVending(room, rng);
       if (room.vending) machines++;
+    }
+    // Espresso machines are a rare treat: most floors have none.
+    for (const room of layout) {
+      if (room.type === 'normal' && !room.vending && rng.chance(COFFEE_CHANCE)) room.coffee = placeVending(room, rng, T.COFFEE_MACHINE);
     }
 
     const secret = level.secretRoom ? addSecretRoom(layout, rng, level) : null;
@@ -189,7 +198,7 @@ function addSecretRoom(layout: Room[], rng: Rng, level: LevelDef): Room | null {
 }
 
 function makeRoom(id: number, gx: number, gy: number, type: RoomType, depth: number): Room {
-  return { id, gx, gy, type, depth, doors: { n: false, s: false, e: false, w: false }, tiles: [], enemies: [], traps: [], camera: null, cameraPc: null, vending: null };
+  return { id, gx, gy, type, depth, doors: { n: false, s: false, e: false, w: false }, tiles: [], enemies: [], traps: [], camera: null, cameraPc: null, vending: null, coffee: null };
 }
 
 export function doorCount(room: Room): number {

@@ -376,6 +376,27 @@ function createTileset(scene: Phaser.Scene): void {
     },
     // Also identical to an ordinary computer: you only learn it runs the CCTV by searching it.
     [T.CAMERA_PC]: () => draw[T.DESK_PC](),
+    [T.COFFEE_MACHINE]: () => {
+      // Office espresso machine: steel body, red light on, a full cup under the spout, steam.
+      box(2, 1, 12, 15, PAL.black);
+      box(3, 2, 10, 13, PAL.silver);
+      box(3, 2, 10, 3, PAL.grey);
+      px(11, 3, PAL.red);
+      px(9, 3, PAL.lime);
+      box(5, 6, 6, 1, PAL.black); // spout
+      box(4, 7, 8, 6, PAL.slate);
+      box(6, 10, 4, 3, PAL.white); // cup
+      box(7, 11, 2, 1, PAL.orange);
+      px(7, 8, PAL.white);
+      px(8, 9, PAL.white);
+      box(3, 14, 10, 1, PAL.grey);
+    },
+    [T.COFFEE_MACHINE_EMPTY]: () => {
+      draw[T.COFFEE_MACHINE]();
+      box(4, 7, 8, 6, PAL.slate); // cup taken
+      px(11, 3, PAL.grey);
+      px(9, 3, PAL.grey);
+    },
     [T.DESK_PC_OFF]: () => {
       draw[T.DESK_PC]();
       box(4, 2, 8, 5, PAL.black);

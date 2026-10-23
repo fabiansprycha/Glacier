@@ -28,6 +28,7 @@ export class UIScene extends Phaser.Scene {
   private map!: Phaser.GameObjects.Graphics;
   private info!: Phaser.GameObjects.Text;
   private itemList!: Phaser.GameObjects.Text;
+  private boostText!: Phaser.GameObjects.Text;
   private hearts: Phaser.GameObjects.Image[] = [];
   private pens!: Phaser.GameObjects.Text;
   private pln!: Phaser.GameObjects.Text;
@@ -52,6 +53,7 @@ export class UIScene extends Phaser.Scene {
     this.info = this.add.text(PAD, PAD + 46, '', textStyle(10, PAL.silver));
     // Items live in the inventory screen (I), so the HUD only counts them and never covers the room.
     this.itemList = this.add.text(PAD, PAD + 60, '', textStyle(10, PAL.cyan));
+    this.boostText = this.add.text(PAD, PAD + 74, '', textStyle(10, PAL.yellow));
 
     this.add
       .text(PAD, VIEW_H - PAD, 'WSAD move · J badge · K pen · Space search · I inventory · Esc pause', textStyle(10, PAL.silver))
@@ -78,6 +80,7 @@ export class UIScene extends Phaser.Scene {
     this.listen('toast', this.onToast);
     this.listen('prompt', ({ text }) => this.promptText.setText(text ?? ''));
     this.listen('boss:health', this.onBossHealth);
+    this.listen('boost', ({ secondsLeft }) => this.boostText.setText(secondsLeft ? `CAFFEINE ${secondsLeft}s` : ''));
     this.listen('banner', ({ title, line, holdMs }) => this.showBanner(title, line, holdMs));
     this.listen('player:died', () => this.showBanner('SURVIVOR OFFLINE', 'Glacier wins this round.'));
     this.listen('game:won', ({ stats }) =>

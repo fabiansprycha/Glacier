@@ -33,6 +33,8 @@ export class Combat implements EnemyWorld {
   private readonly playerShots: Phaser.Physics.Arcade.Group;
   private readonly enemyShots: Phaser.Physics.Arcade.Group;
   private nextMelee = 0;
+  /** Attack speed multiplier (the espresso machine's boost raises it for a while). */
+  haste = 1;
   private nextShot = 0;
 
   constructor(
@@ -110,7 +112,7 @@ export class Combat implements EnemyWorld {
   private melee(): void {
     const now = this.scene.time.now;
     if (now < this.nextMelee) return;
-    this.nextMelee = now + MELEE_COOLDOWN;
+    this.nextMelee = now + MELEE_COOLDOWN / this.haste;
 
     const long = hasItem(this.stats, 'bungee') ? 1.5 : 1;
     const origin = this.player.chest;
@@ -166,7 +168,7 @@ export class Combat implements EnemyWorld {
   private shoot(): void {
     const now = this.scene.time.now;
     if (now < this.nextShot) return;
-    this.nextShot = now + SHOT_COOLDOWN * (hasItem(this.stats, 'stapler') ? 0.5 : 1);
+    this.nextShot = now + (SHOT_COOLDOWN * (hasItem(this.stats, 'stapler') ? 0.5 : 1)) / this.haste;
     if (this.stats.pens <= 0) {
       this.hooks.onOutOfAmmo();
       return;

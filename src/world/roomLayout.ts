@@ -293,8 +293,8 @@ export function placeCamera(room: Room, rng: Rng): { camera: SecurityCamera; pc:
   return null;
 }
 
-/** Puts a vending machine against the top or bottom wall. Returns its tile, or null if nothing fits. */
-export function placeVending(room: Room, rng: Rng): Point | null {
+/** Puts a machine (vending by default) against the top or bottom wall. Returns its tile, or null if nothing fits. */
+export function placeVending(room: Room, rng: Rng, tile: number = T.VENDING): Point | null {
   const spots: Point[] = [];
   for (let x = 2; x <= ROOM_W - 3; x++) {
     if (Math.abs(x - MID_X) <= 1) continue;
@@ -305,7 +305,7 @@ export function placeVending(room: Room, rng: Rng): Point | null {
     if (room.tiles[spot.y][spot.x] !== floorTileFor(room, null) && room.tiles[spot.y][spot.x] !== T.FLOOR_ALT) continue;
     if (busy.some((b) => b.x === spot.x && b.y === spot.y)) continue;
     const before = room.tiles[spot.y][spot.x];
-    room.tiles[spot.y][spot.x] = T.VENDING;
+    room.tiles[spot.y][spot.x] = tile;
     if (isFullyConnected(room.tiles, true)) return spot;
     room.tiles[spot.y][spot.x] = before;
   }

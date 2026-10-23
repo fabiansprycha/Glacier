@@ -47,6 +47,12 @@ const BOSS_CLASSES: Record<BossKind, new (scene: Phaser.Scene, x: number, y: num
   glacier: GlacierBoss,
 };
 
+/** Espresso machine boost: how long, and how much faster the player moves and attacks. */
+const BOOST_MS = 12000;
+const BOOST_SPEED = 1.35;
+const BOOST_HASTE = 1.6;
+const color = (hex: string) => Phaser.Display.Color.HexStringToColor(hex).color;
+
 /** Waves in the secret car park, in order. */
 const SECRET_WAVES: EnemyKind[][] = [
   ['drone', 'drone', 'drone'],
@@ -94,6 +100,9 @@ export class GameScene extends Phaser.Scene {
   /** Secret car park: 0 before the player walks in, then the number of the current wave. */
   private secretWave = 0;
   private overlayClosedAt = 0;
+  /** End of the espresso machine's boost (scene time); 0 when none is running. */
+  private boostUntil = 0;
+  private boostShown: number | null = null;
 
   constructor() {
     super('game');
@@ -112,6 +121,8 @@ export class GameScene extends Phaser.Scene {
     this.lastPrompt = null;
     this.machines = new Map();
     this.secretWave = 0;
+    this.boostUntil = 0;
+    this.boostShown = null;
     this.physics.world.resume();
 
     const layers = buildFloorLayers(this.dungeon, T.VOID);
@@ -166,6 +177,7 @@ export class GameScene extends Phaser.Scene {
 
     emit(this.game, 'level:ready', { dungeon: this.dungeon, level: this.level, levelCount: LEVELS.length });
     this.statsChanged();
+    emit(this.game, 'boost', { secondsLeft: null });
     this.emitBossHealth(false);
     this.enterRoom(this.dungeon.start, false);
     cam.fadeIn(300);
@@ -186,6 +198,7 @@ export class GameScene extends Phaser.Scene {
     this.player.move(this.controls.movement());
     this.combat.update({ melee: this.controls.melee, shoot: this.controls.shoot }, this.currentRoom);
     this.updateInteraction();
+    this.updateBoost();
     if (this.boss.alive && this.currentRoom === this.dungeon.boss) this.emitBossHealth(true);
 
     const feet = this.player.feet;
@@ -418,7 +431,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private statsChanged(): void {
-    this.player.speed = PLAYER_SPEED * (hasItem(this.stats, 'espresso') ? 1.2 : 1);
+    const boosted = this.boostUntil > 0;
+    this.player.speed = PLAYER_SPEED * (hasItem(this.stats, 'espresso') ? 1.2 : 1) * (boosted ? BOOST_SPEED : 1);
+    this.combat.haste = boosted ? BOOST_HASTE : 1;
     emit(this.game, 'stats:changed', { stats: this.stats });
   }
 
@@ -439,7 +454,8 @@ export class GameScene extends Phaser.Scene {
       this.currentRoom === this.dungeon.treasure &&
       Phaser.Math.Distance.Between(this.player.feet.x, this.player.feet.y, this.terminal.x, this.terminal.y + 6) < 18;
     const vending = nearTerminal ? null : this.search.findTarget(this.player, (t) => t === T.VENDING);
-    const target = nearTerminal || vending ? null : this.search.findTarget(this.player);
+    const coffee = nearTerminal || vending ? null : this.search.findTarget(this.player, (t) => t === T.COFFEE_MACHINE);
+    const target = nearTerminal || vending || coffee ? null : this.search.findTarget(this.player);
     // The CCTV computer can be searched even mid-fight: it is how you stop a camera calling more drones.
     // Its prompt is the same as any computer's, so the player cannot tell which one it is.
     const cctv = target?.tile === T.CAMERA_PC;
@@ -448,6 +464,7 @@ export class GameScene extends Phaser.Scene {
     let prompt: string | null = null;
     if (nearTerminal) prompt = '[Space] Connect to the terminal';
     else if (vending) prompt = roomBusy ? 'Deal with the enemies first' : '[Space] Vending machine';
+    else if (coffee) prompt = '[Space] Grab an espresso';
     else if (target && roomBusy) prompt = 'Deal with the enemies first';
     else if (target) prompt = `[Space] Search the ${SEARCH_NAMES[target.tile] ?? 'furniture'}`;
     if (prompt !== this.lastPrompt) {
@@ -458,6 +475,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.controls.interact) return;
     if (nearTerminal) this.useTerminal();
     else if (vending && !roomBusy) this.openVending();
+    else if (coffee) this.drinkCoffee(coffee);
     else if (target && !roomBusy) {
       this.player.halt();
       this.search.start(target, (t) => {
@@ -465,6 +483,33 @@ export class GameScene extends Phaser.Scene {
         else if (t.tile === T.DESK_PC_GLACIER) this.startCaptcha(t);
         else this.giveLoot(t);
       });
+    }
+  }
+
+  /** One espresso per machine: faster movement and attacks for a few seconds. Works mid-fight. */
+  private drinkCoffee({ tx, ty }: SearchTarget): void {
+    this.search.props.putTileAt(T.COFFEE_MACHINE_EMPTY, tx, ty);
+    this.boostUntil = this.time.now + BOOST_MS;
+    this.statsChanged();
+    this.player.setTint(color(PAL.yellow));
+    this.toast(`Fresh espresso! Faster moves and attacks for ${BOOST_MS / 1000} s.`, PAL.yellow);
+  }
+
+  private updateBoost(): void {
+    if (this.boostUntil === 0) return;
+    const left = Math.ceil((this.boostUntil - this.time.now) / 1000);
+    if (left <= 0) {
+      this.boostUntil = 0;
+      this.boostShown = null;
+      this.player.clearTint();
+      this.statsChanged();
+      emit(this.game, 'boost', { secondsLeft: null });
+      this.toast('The caffeine wears off.', PAL.silver);
+      return;
+    }
+    if (left !== this.boostShown) {
+      this.boostShown = left;
+      emit(this.game, 'boost', { secondsLeft: left });
     }
   }
 
@@ -613,7 +658,7 @@ export class GameScene extends Phaser.Scene {
     this.stats.hp = this.stats.maxHp;
     this.stats.pens = Math.max(this.stats.pens, 10);
     this.statsChanged();
-    this.toast(`Allied software ARGUS: full repair. ${text}`, PAL.lime);
+    this.toast(`Allied software MEOLN: full repair. ${text}`, PAL.lime);
     this.tweens.killTweensOf(this.terminal);
     this.terminal.setAlpha(0.6);
   }

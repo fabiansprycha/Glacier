@@ -134,6 +134,25 @@ describe('secret room', () => {
   });
 });
 
+describe('espresso machines', () => {
+  it('are rare and stand in ordinary rooms', () => {
+    let rooms = 0;
+    let machines = 0;
+    for (let seed = 1; seed <= 200; seed++) {
+      for (const r of generateDungeon({ seed, level: LEVELS[2] }).rooms) {
+        if (r.type === 'normal') rooms++;
+        if (!r.coffee) continue;
+        machines++;
+        expect(r.type).toBe('normal');
+        expect(r.tiles[r.coffee.y][r.coffee.x]).toBe(T.COFFEE_MACHINE);
+        expect(isFullyConnected(r.tiles, true)).toBe(true);
+      }
+    }
+    expect(machines).toBeGreaterThan(0);
+    expect(machines / rooms).toBeLessThan(0.1);
+  });
+});
+
 describe('clutter', () => {
   it('fills rooms with breakable obstacles, the start room included, never on a door', () => {
     for (let seed = 1; seed <= 100; seed++) {
