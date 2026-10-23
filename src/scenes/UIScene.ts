@@ -43,6 +43,8 @@ export class UIScene extends Phaser.Scene {
   }
 
   create(): void {
+    // The scene is reused for every run; the old heart images were destroyed with the last one.
+    this.hearts = [];
     this.map = this.add.graphics();
 
     // Top left: hearts, then batteries and pln.
