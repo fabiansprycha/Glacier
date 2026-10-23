@@ -2,6 +2,8 @@
 
 A top-down 2D pixel-art roguelike with procedurally generated rooms. Runs in the browser.
 
+**Play it:** https://fabiansprycha.github.io/Glacier/ (deployed by GitHub Actions on every push to `main`).
+
 ## The world
 
 An AI has taken over the world. A piece of software called **Glacier** destroys people and hunts down other software that sided with humans. The player makes their way through abandoned IT offices: open spaces, meeting rooms, archives, break rooms and server rooms frozen over by Glacier. Each floor of the office building is one level, and the elevator in the boss room leads up.
