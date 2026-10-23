@@ -151,6 +151,33 @@ export const DRONE = {
   ],
 };
 
+/** Rogue vacuum robot seen from above: a grey disc with a bumper, a sensor eye and brushes. Frame 1 flashes red (about to charge). */
+const ROOMBA_ROWS = [
+  '................',
+  '................',
+  '.....kkkkkk.....',
+  '...kkggggggkk...',
+  '..kgssssssssgk..',
+  '..kgsseeeessgk..',
+  '.kgssssssssssgk.',
+  '.kgssssbbssssgk.',
+  '.kgssssbbssssgk.',
+  '.kgssssssssssgk.',
+  '..kgssssssssgk..',
+  '..kggggggggggk..',
+  '...kkbbbbbbkk...',
+  '.....kkkkkk.....',
+  '................',
+  '................',
+];
+export const ROOMBA = {
+  colors: { k: PAL.black, g: PAL.grey, s: PAL.silver, e: PAL.cyan, r: PAL.red, b: PAL.slate },
+  frames: [
+    { name: '0', rows: ROOMBA_ROWS },
+    { name: '1', rows: ROOMBA_ROWS.map((r) => r.replace(/e/g, 'r')) },
+  ],
+};
+
 const PEN_ROWS = [
   '................', '................', '................', '................',
   '................', '................', '.kkkkkkkkkkk....', 'kbwbbbbbbbbskk..',

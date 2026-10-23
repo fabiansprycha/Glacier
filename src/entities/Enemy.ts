@@ -100,6 +100,64 @@ export class Drone extends Enemy {
   }
 }
 
+/**
+ * Rogue vacuum robot: rolls on the floor (furniture blocks it, unlike drones). It sits still,
+ * flashes red, then charges at where the player was, bouncing off whatever it hits, then rests again.
+ */
+export class Roomba extends Enemy {
+  static readonly WINDUP_MS = 550;
+  static readonly REST_MS = 700;
+  static readonly CHARGE_MS = 1000;
+  private mode: 'rest' | 'windup' | 'charge' = 'rest';
+  private stateUntil = 0;
+  private readonly speed: number;
+
+  constructor(scene: Phaser.Scene, x: number, y: number, room: Room, level: number) {
+    super(scene, x, y, TEX.roomba, room, 4 + Math.floor((level - 1) / 2));
+    this.speed = 135 + level * 10;
+    this.body.setCircle(6, 2, 3);
+  }
+
+  wake(): void {
+    super.wake();
+    // Set here, not in the constructor: joining the physics group resets the bounce.
+    this.body.setBounce(1, 1);
+    this.rest(400 + Math.random() * 500);
+  }
+
+  private rest(ms: number): void {
+    this.mode = 'rest';
+    this.stateUntil = this.scene.time.now + ms;
+    this.setVelocity(0, 0);
+    this.setFrame('0');
+  }
+
+  protected think({ player }: EnemyWorld): void {
+    const now = this.scene.time.now;
+    if (this.mode === 'rest') {
+      this.setVelocity(0, 0);
+      if (now < this.stateUntil) return;
+      this.mode = 'windup';
+      this.stateUntil = now + Roomba.WINDUP_MS;
+      this.setFrame('1');
+      this.scene.tweens.add({ targets: this, scale: 1.12, yoyo: true, duration: 90, repeat: 2 });
+    } else if (this.mode === 'windup') {
+      this.setVelocity(0, 0);
+      if (now < this.stateUntil) return;
+      const dir = new Phaser.Math.Vector2(player.feet.x - this.x, player.feet.y - this.y).normalize();
+      this.mode = 'charge';
+      this.stateUntil = now + Roomba.CHARGE_MS;
+      this.setVelocity(dir.x * this.speed, dir.y * this.speed);
+      this.setRotation(dir.angle() + Math.PI / 2);
+    } else {
+      // It bounces off walls and furniture (body bounce 1) and keeps going until the charge runs out.
+      const v = this.body.velocity;
+      this.setRotation(v.angle() + Math.PI / 2);
+      if (now >= this.stateUntil || v.length() < this.speed * 0.2) this.rest(Roomba.REST_MS);
+    }
+  }
+}
+
 /** Rogue office printer: bolted to the floor, spits a sheet of paper at the player every two seconds. */
 export class RoguePrinter extends Enemy {
   static readonly FIRE_MS = 2000;

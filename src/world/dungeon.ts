@@ -16,7 +16,7 @@ export const OPPOSITE: Record<Dir, Dir> = { n: 's', s: 'n', e: 'w', w: 'e' };
 
 export type RoomType = 'start' | 'normal' | 'treasure' | 'boss' | 'secret';
 
-export type EnemyKind = 'drone' | 'printer';
+export type EnemyKind = 'drone' | 'printer' | 'roomba';
 
 /**
  * Something that happens when the player walks into a room:

@@ -4,7 +4,7 @@ import { Rng } from '../core/rng';
 import { T, TILE_COUNT } from '../world/tiles';
 import { PAL, drawPixels } from './pixels';
 import type { HeroClass } from '../core/classes';
-import { BOSSES, CAMERA, DRONE, ELEVATOR, FX, GLACIER, HERO_COLORS, HERO_FRAMES, HERO_HAIR, HERO_SHIRTS, ICONS, TERMINAL } from './sprites';
+import { BOSSES, CAMERA, DRONE, ELEVATOR, FX, GLACIER, HERO_COLORS, HERO_FRAMES, HERO_HAIR, HERO_SHIRTS, ICONS, ROOMBA, TERMINAL } from './sprites';
 
 export const TEX = {
   tiles: 'tiles',
@@ -13,6 +13,7 @@ export const TEX = {
   glacier: 'glacier',
   elevator: 'elevator',
   drone: 'drone',
+  roomba: 'roomba',
   fx: 'fx',
   icons: 'icons',
   bosses: 'bosses',
@@ -35,6 +36,7 @@ export function createTextures(scene: Phaser.Scene): void {
   createSheet(scene, TEX.glacier, [{ name: '0', rows: GLACIER.rows }], GLACIER.colors);
   createSheet(scene, TEX.elevator, [{ name: '0', rows: ELEVATOR.rows }], ELEVATOR.colors);
   createSheet(scene, TEX.drone, DRONE.frames, DRONE.colors);
+  createSheet(scene, TEX.roomba, ROOMBA.frames, ROOMBA.colors);
   createSheet(scene, TEX.fx, FX.frames, FX.colors);
   createSheet(scene, TEX.icons, ICONS.frames, ICONS.colors);
   createSheet(scene, TEX.bosses, BOSSES.frames, BOSSES.colors);

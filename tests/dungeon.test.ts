@@ -113,7 +113,7 @@ describe('enemies', () => {
     const kinds = new Set<string>();
     for (let seed = 1; seed <= 30; seed++)
       for (const r of generateDungeon({ seed, level: LEVELS[0] }).rooms) r.enemies.forEach((e) => kinds.add(e.kind));
-    expect([...kinds].sort()).toEqual(['drone', 'printer']);
+    expect([...kinds].sort()).toEqual(['drone', 'printer', 'roomba']);
   });
 });
 

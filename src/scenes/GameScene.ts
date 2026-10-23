@@ -6,7 +6,7 @@ import { Controls } from '../core/input';
 import { BOSS_NAMES, LEVELS, levelDef, type BossKind } from '../core/levels';
 import { deriveSeed, randomSeed } from '../core/rng';
 import { newPlayerStats, type PlayerStats } from '../core/stats';
-import { Drone, GlacierBoss, GuardBoss, MotherBoss, PrinterBoss, RoguePrinter, type Boss, type Enemy } from '../entities/Enemy';
+import { Drone, GlacierBoss, GuardBoss, MotherBoss, PrinterBoss, RoguePrinter, Roomba, type Boss, type Enemy } from '../entities/Enemy';
 import { Player } from '../entities/Player';
 import { PAL } from '../gfx/pixels';
 import { TEX, heroTexture } from '../gfx/textures';
@@ -61,9 +61,9 @@ const color = (hex: string) => Phaser.Display.Color.HexStringToColor(hex).color;
 
 /** Waves in the secret car park, in order. */
 const SECRET_WAVES: EnemyKind[][] = [
-  ['drone', 'drone', 'drone'],
-  ['drone', 'drone', 'drone', 'printer'],
-  ['drone', 'drone', 'drone', 'drone', 'printer', 'printer'],
+  ['drone', 'drone', 'drone', 'roomba'],
+  ['drone', 'drone', 'drone', 'printer', 'roomba'],
+  ['drone', 'drone', 'drone', 'drone', 'printer', 'printer', 'roomba', 'roomba'],
 ];
 
 /** What a vending machine slot sells: a consumable or an item. */
@@ -252,7 +252,7 @@ export class GameScene extends Phaser.Scene {
     for (const room of this.dungeon.rooms) {
       const list = room.enemies.map(({ x, y, kind }) => {
         const p = tileCenter(room, x, y);
-        return kind === 'printer' ? new RoguePrinter(this, p.x, p.y, room, this.level) : new Drone(this, p.x, p.y, room, this.level);
+        return this.makeEnemy(kind, p.x, p.y, room);
       });
       this.enemiesByRoom.set(room.id, list);
       room.traps.forEach(({ x, y }) => this.traps.add(room, x, y));
@@ -265,9 +265,18 @@ export class GameScene extends Phaser.Scene {
     for (const list of this.enemiesByRoom.values()) list.forEach((e) => this.combat.add(e));
   }
 
+  private makeEnemy(kind: EnemyKind, x: number, y: number, room: Room): Enemy {
+    if (kind === 'printer') return new RoguePrinter(this, x, y, room, this.level);
+    if (kind !== 'roomba') return new Drone(this, x, y, room, this.level);
+    // Vacuum robots roll on the floor: furniture stops them, unlike flying drones.
+    const roomba = new Roomba(this, x, y, room, this.level);
+    this.physics.add.collider(roomba, this.search.props);
+    return roomba;
+  }
+
   /** Reinforcements (boss summons, alarms): awake at once, and the room's doors shut behind them. */
   private spawnDrone(x: number, y: number, room: Room, kind: EnemyKind = 'drone'): Enemy {
-    const drone = kind === 'printer' ? new RoguePrinter(this, x, y, room, this.level) : new Drone(this, x, y, room, this.level);
+    const drone = this.makeEnemy(kind, x, y, room);
     this.combat.add(drone);
     this.enemiesByRoom.get(room.id)!.push(drone);
     if (room === this.currentRoom) {

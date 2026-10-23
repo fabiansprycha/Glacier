@@ -33,7 +33,7 @@ src/
   core/      config, seeded RNG, controls, levels, items, typed events between scenes
   world/     pure world logic with no Phaser: dungeon generator, room layouts, tiles, loot
   gfx/       placeholder art drawn in code (Sweetie 16 palette)
-  entities/  player, drones, rogue printers, bosses (printer, security bot, swarm mother, Glacier)
+  entities/  player, drones, rogue printers, vacuum robots, bosses (printer, security bot, swarm mother, Glacier)
   systems/   combat, searching furniture, breakables, traps, security cameras
   scenes/    Boot (textures) → Menu (title screen) → Game (gameplay) + UI (HUD, minimap), with
              Captcha (minigame), Shop (vending machine), Inventory, Pause and Note (emails, sticky notes) as overlays
@@ -60,7 +60,7 @@ Principles that keep it easy to extend:
 - **Bosses**: the Network printer (fans and rings of paper), the Security bot (telegraphs a charge and rams into the wall), the Swarm mother (keeps its distance and launches drones) and finally **Glacier** (ice shards, calls drones in its last third of health). Beating Glacier wins the run.
 - **Boss balance**: bosses have 45 / 60 / 70 health (Glacier 110) and take at most one pen every 0.22 s, so a fan of pens from the four-colour pen does not melt them in a second.
 - **Combat**: the badge on a lanyard (an arc swing with knockback) and thrown pens (one pen per throw, pens are ammo). Drones and shots fly over furniture.
-- **Enemies**: drones that chase you, and rogue printers (30–40% of room enemies) that stand still and shoot a sheet of paper at you every 2 seconds. Entering a room with enemies shuts its doors with shutters until they are gone. No enemy ever appears within 4 tiles of the player: room enemies, alarm reinforcements and car park waves that would spawn too close are moved to the nearest safe floor tile.
+- **Enemies**: 2–3 to 3–6 per room depending on the level. Drones chase you and fly over furniture. Rogue printers (30–40%) stand still and shoot a sheet of paper at you every 2 seconds. **Rogue vacuum robots** (20–30%) roll on the floor: they sit still, flash red, then charge at where you stood, bouncing off walls and furniture, and rest again. The car park waves include them too. Entering a room with enemies shuts its doors with shutters until they are gone. No enemy ever appears within 4 tiles of the player: room enemies, alarm reinforcements and car park waves that would spawn too close are moved to the nearest safe floor tile.
 - **Traps**: floor plates with a torn cable. Cycle: idle, sparks (warning), current (damage).
 - **Security cameras** in some rooms without enemies: they sweep and show a yellow vision cone. Stepping into it raises the alarm, the doors shut and drones fly in (more on higher levels). The camera keeps watching after an alarm (its cone turns red) and can call more drones 5 seconds later. The only way to stop it is the room's CCTV computer. It looks like every other computer, so you have to find it by searching, but it always stands somewhere the camera can never see. Cameras keep sweeping while you search.
 - **Searching** (Space) desks (mostly pens), cabinets (first aid, cash) and computers (cash). Only once the room has no enemies.

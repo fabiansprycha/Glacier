@@ -1,7 +1,7 @@
 import { ROOM_H, ROOM_W } from '../core/config';
 import type { LevelDef } from '../core/levels';
 import type { Rng } from '../core/rng';
-import type { Dir, EnemySpawn, Room, SecurityCamera } from './dungeon';
+import type { Dir, EnemyKind, EnemySpawn, Room, SecurityCamera } from './dungeon';
 import { cameraCanSeeTile } from './cameraVision';
 import { T, isBreakable, isWalkable } from './tiles';
 
@@ -236,11 +236,15 @@ function openFloor(room: Room, gap: number, taken: Point[] = []): Point[] {
 export function pickEnemySpawns(room: Room, rng: Rng, level: LevelDef): EnemySpawn[] {
   if (room.type !== 'normal') return [];
   const candidates = openFloor(room, 4);
-  const count = Math.min(rng.int(1, level.maxDrones), candidates.length);
+  const count = Math.min(rng.int(level.minEnemies, level.maxDrones), candidates.length);
   return rng
     .shuffle(candidates)
     .slice(0, count)
-    .map((p) => ({ ...p, kind: rng.chance(level.printerChance) ? 'printer' : 'drone' }));
+    .map((p) => {
+      const roll = rng.next();
+      const kind: EnemyKind = roll < level.printerChance ? 'printer' : roll < level.printerChance + level.roombaChance ? 'roomba' : 'drone';
+      return { ...p, kind };
+    });
 }
 
 /** Electrified floor traps: never right inside a door and never under a drone. */

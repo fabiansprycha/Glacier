@@ -7,10 +7,13 @@ export interface LevelDef {
   intro: string;
   roomCount: number;
   boss: BossKind;
-  /** Max enemies per ordinary room. */
+  /** Enemies per ordinary room (rooms watched by a camera have none), inclusive range. */
+  minEnemies: number;
   maxDrones: number;
   /** Share of those enemies that are rogue printers instead of drones. */
   printerChance: number;
+  /** Share of those enemies that are rogue vacuum robots. */
+  roombaChance: number;
   /** Electrified floor traps per ordinary room, inclusive range. */
   traps: [number, number];
   /** Share of ordinary rooms with no drones, watched by a security camera instead. */
@@ -31,8 +34,10 @@ export const LEVELS: readonly LevelDef[] = [
     intro: 'Glacier took over the network. People fled the offices. The printer at the end of the floor is still printing.',
     roomCount: 8,
     boss: 'printer',
-    maxDrones: 2,
+    minEnemies: 2,
+    maxDrones: 3,
     printerChance: 0.3,
+    roombaChance: 0.2,
     traps: [0, 1],
     cameraChance: 0.3,
     glacierPcChance: 0.25,
@@ -45,8 +50,10 @@ export const LEVELS: readonly LevelDef[] = [
     intro: 'The software that sides with humans was written here. Security only obeys Glacier now.',
     roomCount: 10,
     boss: 'guard',
-    maxDrones: 3,
+    minEnemies: 2,
+    maxDrones: 4,
     printerChance: 0.35,
+    roombaChance: 0.25,
     traps: [0, 2],
     cameraChance: 0.35,
     glacierPcChance: 0.3,
@@ -58,8 +65,10 @@ export const LEVELS: readonly LevelDef[] = [
     intro: 'The roar of the fans drowns out everything. Somewhere in here, drones are being born.',
     roomCount: 12,
     boss: 'mother',
-    maxDrones: 4,
+    minEnemies: 3,
+    maxDrones: 5,
     printerChance: 0.4,
+    roombaChance: 0.3,
     traps: [1, 2],
     cameraChance: 0.4,
     glacierPcChance: 0.35,
@@ -71,8 +80,10 @@ export const LEVELS: readonly LevelDef[] = [
     intro: 'Ice has sealed the top floor. Glacier waits in the server room.',
     roomCount: 14,
     boss: 'glacier',
-    maxDrones: 5,
+    minEnemies: 3,
+    maxDrones: 6,
     printerChance: 0.4,
+    roombaChance: 0.3,
     traps: [1, 3],
     cameraChance: 0.45,
     glacierPcChance: 0.4,
